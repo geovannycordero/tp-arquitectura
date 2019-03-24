@@ -55,6 +55,9 @@ void tp(int ac, char** av){
 	if(myid == 0){
 		printf("Ingrese la dimensión de su matriz: ");
 		scanf("%i", &dim);
+		
+		//guarda el tiempo actual, en segundos
+	    i_time = MPI_Wtime(); 
 
 		srand(time(NULL));
 		
@@ -74,22 +77,30 @@ void tp(int ac, char** av){
 		}
 
 	}
+	
+	/* BRETE HARDCORE */
+	
+	/* BRETE HARDCORE */
 		
 	/* Barrera de sincronizacion.
 	   Hasta que todos los procesos alcancen este llamado ninguno puede proseguir.*/
 	MPI_Barrier(MPI_COMM_WORLD);
+	
+	//guarda el tiempo actual, en segundos
+    i_time = MPI_Wtime(); 
 	
 	if(myid == 0){
 		printf("\nResultados finales:\n");
 		printf("	Valor de n = %i \n", dim);
 		printf("	Número total de procesos que corrieron: %i \n", numprocs);
 		printf("	Total de valores primos en M: %i \n", nprimos);
-		//toma el tiempo al momento del final de ejecucion
-	    f_time = MPI_Wtime();
-	    printf("	Tiempo total: %f segundos. \n", f_ttime - i_ttime);
+			    
 	    /*El tiempo que tardó desde que ya el usuario comunicó sus valores hasta 
 		  antes de que se desplieguen resultados en pantalla y se escriban los 
 		  archivos de texto. */
+		printf("	Tiempo total de \"procesamiento\": %f segundos. \n", f_time - i_time);
+		
+		/* escribir en los archivos */
 		
 		/*Si n ≤ 100, se despliegan en pantalla también: A, B, M, P y C, de manera
 		  que se puedan distinguir fácilmente las filas y las columnas en el caso
@@ -139,6 +150,11 @@ void tp(int ac, char** av){
 			}
 		}
 	}	
+	
+	//toma el tiempo al momento del final de ejecucion
+    f_time = MPI_Wtime();
+    printf("	Tiempo total: %f segundos. \n", f_ttime - i_ttime);
+    
     MPI_Finalize();
 }
 
