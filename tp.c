@@ -24,11 +24,11 @@ void tp(int ac, char** av){
     char processor_name[MPI_MAX_PROCESSOR_NAME];
         
 	//creación de matrices
-	int a[100][100];
-	int b[100][100];
-	int m[100][100];
-	int p[100];
-	int c[100][100];
+	int A[1024][1024];
+	int B[1024][1024];
+	int M[1024][1024];
+	int P[1024];
+	int C[1024][1024];
 	
 
 	//se inicia el trabajo con MPI
@@ -65,14 +65,14 @@ void tp(int ac, char** av){
 		for(i=0;i<dim;i++){
 			for(j=0;j<dim;j++){
 				//números entre 0 y 2
-				b[i][j] = rand() % 6;
+				B[i][j] = rand() % 6;
 			}
 		}
 				
 		for(i=0;i<dim;i++){
 			for(j=0;j<dim;j++){
 				//números entre 0 y 2
-				a[i][j] = rand() % 3;
+				A[i][j] = rand() % 3;
 			}
 		}
 
@@ -111,7 +111,7 @@ void tp(int ac, char** av){
 			printf("\n***	A	****\n");
 			for(i=0;i<dim;i++){
 				for(j=0;j<dim;j++){
-					printf(" %i ", a[i][j]);
+					printf(" %i ", A[i][j]);
 				}
 				printf("\n");
 			}
@@ -119,7 +119,7 @@ void tp(int ac, char** av){
 			printf("\n\n***	B	****\n");
 			for(i=0;i<dim;i++){
 				for(j=0;j<dim;j++){
-					printf(" %i ", b[i][j]);
+					printf(" %i ", B[i][j]);
 				}
 				printf("\n");
 			}
@@ -128,23 +128,23 @@ void tp(int ac, char** av){
 			printf("\n\n***	M	****\n");
 			for(i=0;i<dim;i++){
 				for(j=0;j<dim;j++){
-					printf(" %i ", m[i][j]);
+					printf(" %i ", M[i][j]);
 				}
 				printf("\n");
 			}
 			//imprimir P
 			printf("\n\n***	P	****\n");
 			for(i=0;i<dim-i;i++){
-				printf("%i, ", p[i]);
+				printf("%i, ", P[i]);
 			}
-			printf("%i. \n", p[i]);
+			printf("%i. \n", P[i]);
 		
 		
 			//imprimir C
 			printf("\n\n***	C	****\n");
 			for(i=0;i<dim;i++){
 				for(j=0;j<dim;j++){
-					printf(" %i ", c[i][j]);
+					printf(" %i ", C[i][j]);
 				}
 				printf("\n");
 			}
