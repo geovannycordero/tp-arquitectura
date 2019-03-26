@@ -64,8 +64,8 @@ void tp(int ac, char** av){
 		//llenado de matrices		
 		for(i=0;i<dim;i++){
 			for(j=0;j<dim;j++){
-				//números entre 1 y 5
-				b[i][j] = rand() % 5 + 1;
+				//números entre 0 y 2
+				b[i][j] = rand() % 6;
 			}
 		}
 				
