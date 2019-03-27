@@ -83,13 +83,13 @@ void tp(int ac, char** av){
 	/*
 	para calcular M se puede hacer de esta manera
 	for(int i=0; i<n; i++){
-    	for(int k=0; k<n; k++){
-    		for(int j=0;j<n;j++){
-    			m[i][k] += a[i][j] * b[j][k];
+    	    for(int k=0; k<n; k++){
+	    	for(int j=0;j<n;j++){
+		    m[i][k] += a[i][j] * b[j][k];
     		}
+    	    }
     	}
-    }
-    */
+    	*/
 	
 	/* BRETE */
 		
