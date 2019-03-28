@@ -108,10 +108,11 @@ void tp(int ac, char** av){
 	int* M; // Matriz M = A * B
 	int* P; // Vector donde P[i] = cantidad de # primos en la columna i de M
 	int* C; // Matriz donde C[i,j] = M[i,j] + M[i,j-1] + M[i-1,j] + M[i,j+1] + M[i+1,j]
-	
+	int* Ax; // porción de la matriz A que le corresponde a cada proceso
+	int* Mx; // porción de la matriz M de resultados
 
-	//se inicia el trabajo con MPI
-    MPI_Init(&ac, &av); 
+    //se inicia el trabajo con MPI
+    MPI_Init(&ac, &av);
 
 	//guarda el tiempo actual, en segundos
     i_ttime = MPI_Wtime(); 
@@ -130,7 +131,8 @@ void tp(int ac, char** av){
 	/* Barrera de sincronizacion.
 	   Hasta que todos los procesos alcancen este llamado ninguno puede proseguir.*/
 	MPI_Barrier(MPI_COMM_WORLD);
-	
+
+	// Proceso 0 se encarga de crear las matrices A y B
 	if(myId == 0) {
 		printf("Ingrese la dimensión de su matriz: ");
 		scanf("%i", &n);
@@ -140,26 +142,66 @@ void tp(int ac, char** av){
 
 		srand(time(NULL));
 
-		//llenado de matrices		
-		A = (int *) malloc(n * n * sizeof(int)); // reserva de memoria para una matriz de enteros n x n
-		B = (int *) malloc(n * n * sizeof(int));
+        //reserva de memoria
+        A = (int *) malloc(n * n * sizeof(int)); // reserva de memoria para una matriz de enteros n x n
+        B = (int *) malloc(n * n * sizeof(int));
+        M = (int *) malloc(n * n * sizeof(int));
+        P = (int *) malloc(n * sizeof(int));     // reserva de memoria para un vector de n entradas
+        C = (int *) malloc(n * n * sizeof(int));
 
-		llenarMatrices(n,A,B);
-
+        // verifica que efectivamente se haya reservado la memoria necesaria
+		if (A==NULL || B==NULL || M == NULL || P==NULL || C==NULL){
+            fprintf(stderr, "ERROR: La aplicación no pudo reservar memoria para las matrices, por lo que se ha cerrado\n");
+            exit(EXIT_FAILURE);
+        } else{
+			llenarMatrices(n,A,B);
+		}
 	}
-	/* BRETE */
-	
-	/*
-	para calcular M se puede hacer de esta manera
-	for(int i=0; i<n; i++){
-    	    for(int k=0; k<n; k++){
-	    	for(int j=0;j<n;j++){
-		    m[i][k] += a[i][j] * b[j][k];
-    		}
-    	    }
-    	}
-    	*/
-	
+
+	MPI_Bcast(&n,1,MPI_INT,0,MPI_COMM_WORLD); // propagación del valor n definido por el usuario
+
+    //reserva de memoria
+    Ax = (int*) malloc(n/numProcs * n * sizeof(int));
+    Mx = (int*) malloc(n/numProcs * n * sizeof(int));
+    if(myId!=0){
+        B = (int *) malloc(n * n * sizeof(int));
+        P = (int *) malloc(n * sizeof(int));     // reserva de memoria para un vector de n entradas
+    }
+
+    MPI_Bcast(B,(n*n),MPI_INT,0,MPI_COMM_WORLD); // propagación de la totalidad de la matriz B
+
+    int filas = n/numProcs;
+    int columnas = n;
+
+	MPI_Scatter(A,filas*columnas,MPI_INT,Ax,filas*columnas,MPI_INT,0,MPI_COMM_WORLD);
+
+	int fila=0;
+    for (; fila < filas; ++fila) {
+        int columna = 0;
+        for(; columna < columnas; ++columna){
+            int offset = fila * columnas + columna; // índice de acceso de la matriz Mx(fila,columna)
+            Mx[offset] = 0; // limpia la basura en memoria
+            int x = 0;
+            for(; x < columnas; ++x){
+                Mx[offset] = Mx[offset] + Ax[fila * columnas + x] * B[x * columnas + columna];
+            }
+        }
+    }
+
+    MPI_Gather(Mx,filas*columnas,MPI_INT,M,filas*columnas,MPI_INT,0,MPI_COMM_WORLD);
+
+    if(myId == 0){
+        // imprime M
+        printf("\nM =");
+        int i=0;
+        for (; i < n*n; i++) {
+            if(!(i%n)){
+                printf("\n\t");
+            }
+            printf("%i ", M[i]);
+        }
+    }
+
 	/* BRETE */
 		
 	/* Barrera de sincronizacion.
