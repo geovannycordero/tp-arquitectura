@@ -122,7 +122,7 @@ void tp(int ac, char** av){
     int numProcs; // cantidad de procesos creados
     int nameLen; // nombre del nodo del clúster en el corre el proceso actual
     int n; // dimensión de la matriz (siempre es de tamaño n x n)
-    int nPrimos; // cantidad de números primos en M
+    int tp; // cantidad de números primos en M
 
     double i_ttime;
     double f_ttime;
@@ -233,7 +233,7 @@ void tp(int ac, char** av){
 	   Hasta que todos los procesos alcancen este llamado ninguno puede proseguir.*/
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	
+
 
 
 
@@ -249,63 +249,12 @@ void tp(int ac, char** av){
 		printf("\nResultados finales:\n");
 		printf("	Valor de n = %i \n", n);
 		printf("	Número total de procesos que corrieron: %i \n", numProcs);
-		printf("	Total de valores primos en M: %i \n", nPrimos);
+		printf("	Total de valores primos en M: %i \n", tp);
 			    
 	    /*El tiempo que tardó desde que ya el usuario comunicó sus valores hasta 
 		  antes de que se desplieguen resultados en pantalla y se escriban los 
 		  archivos de texto. */
 		printf("	Tiempo total de \"procesamiento\": %f segundos. \n", f_time - i_time);
-		
-		/* escribir en los archivos */
-		
-		/*Si n ≤ 100, se despliegan en pantalla también: A, B, M, P y C, de manera
-		  que se puedan distinguir fácilmente las filas y las columnas en el caso
-	      de las matrices. Si n > 100 se copia en un archivo de texto cada uno de 
-	      estos arreglos. */
-		//if(dim <100){
-		//if(0){
-//			printf("\n***	A	****\n");
-//			for(i=0;i<dim;i++){
-//				for(j=0;j<dim;j++){
-//					printf(" %i ", A[i][j]);
-//				}
-//				printf("\n");
-//			}
-//
-//			printf("\n\n***	B	****\n");
-//			for(i=0;i<dim;i++){
-//				for(j=0;j<dim;j++){
-//					printf(" %i ", B[i][j]);
-//				}
-//				printf("\n");
-//			}
-//
-//			//imprimir M
-//			printf("\n\n***	M	****\n");
-//			for(i=0;i<dim;i++){
-//				for(j=0;j<dim;j++){
-//					printf(" %i ", M[i][j]);
-//				}
-//				printf("\n");
-//			}
-//			//imprimir P
-//			printf("\n\n***	P	****\n");
-//			for(i=0;i<dim-i;i++){
-//				printf("%i, ", P[i]);
-//			}
-//			printf("%i. \n", P[i]);
-//
-//
-//			//imprimir C
-//			printf("\n\n***	C	****\n");
-//			for(i=0;i<dim;i++){
-//				for(j=0;j<dim;j++){
-//					printf(" %i ", C[i][j]);
-//				}
-//				printf("\n");
-//			}
-//		}
-//	}
 	
 	//toma el tiempo al momento del final de ejecucion
     f_time = MPI_Wtime();
