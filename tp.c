@@ -53,35 +53,35 @@ int main(int argc, char** argv){
  * @param B direción en memoria de la matriz B
  */
 void llenarMatrices(int n, int* A, int* B){
-	int i=0;
-	for(; i < (n*n) ; i++){
+    int i=0;
+    for(; i < (n*n) ; i++){
         A[i] = rand() % 6; // llena la matriz A con números entre 0 y 5
     }
 
-	i = 0;
+    i = 0;
     for(; i< (n*n) ; i++){
         B[i] = rand() % 3; // llena la matriz B con números entre 0 y 2
     }
 
-	// imprime A
-	printf("A =");
-	i=0;
-	for (; i < n*n; i++) {
-		if(!(i%n)){
-			printf("\n\t");
-		}
-		printf("%i ", A[i]);
-	}
+    // imprime A
+    printf("A =");
+    i=0;
+    for (; i < n*n; i++) {
+        if(!(i%n)){
+            printf("\n\t");
+        }
+        printf("%i ", A[i]);
+    }
 
     // imprime B
-	printf("\nB =");
-	i=0;
-	for (; i < n*n; i++) {
-		if(!(i%n)){
-			printf("\n\t");
-		}
-		printf("%i ", B[i]);
-	}
+    printf("\nB =");
+    i=0;
+    for (; i < n*n; i++) {
+        if(!(i%n)){
+            printf("\n\t");
+        }
+        printf("%i ", B[i]);
+    }
 }
 
 /**
@@ -130,44 +130,44 @@ void tp(int ac, char** av){
     double f_time;
     char processor_name[MPI_MAX_PROCESSOR_NAME];
 
-	int* A; // Matriz con números aleatorios entre 0 y 5
-	int* B; // Matriz con números aleatorios entre 0 y 2
-	int* M; // Matriz M = A * B
-	int* P; // Vector donde P[i] = cantidad de # primos en la columna i de M
-	int* C; // Matriz donde C[i,j] = M[i,j] + M[i,j-1] + M[i-1,j] + M[i,j+1] + M[i+1,j]
-	int* Ax; // porción de la matriz A que le corresponde a cada proceso
-	int* Mx; // porción de la matriz M de resultados
+    int* A; // Matriz con números aleatorios entre 0 y 5
+    int* B; // Matriz con números aleatorios entre 0 y 2
+    int* M; // Matriz M = A * B
+    int* P; // Vector donde P[i] = cantidad de # primos en la columna i de M
+    int* C; // Matriz donde C[i,j] = M[i,j] + M[i,j-1] + M[i-1,j] + M[i,j+1] + M[i+1,j]
+    int* Ax; // porción de la matriz A que le corresponde a cada proceso
+    int* Mx; // porción de la matriz M de resultados
 
     //se inicia el trabajo con MPI
     MPI_Init(&ac, &av);
 
-	//guarda el tiempo actual, en segundos
-    i_ttime = MPI_Wtime(); 
+    //guarda el tiempo actual, en segundos
+    i_ttime = MPI_Wtime();
 
-	//obtiene el id del proceso actual
+    //obtiene el id del proceso actual
     MPI_Comm_rank(MPI_COMM_WORLD, &myId);
 
-	//guarda la cantidad de procesos 
+    //guarda la cantidad de procesos
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
-	//guarda el nombre de la computadora en la que corre el proceso actual y el tamaño
+    //guarda el nombre de la computadora en la que corre el proceso actual y el tamaño
     MPI_Get_processor_name(processor_name, &nameLen);
 
-	printf("Proceso %i de %i corriendo en %s \n", myId, numProcs, processor_name);
-	
-	/* Barrera de sincronizacion.
-	   Hasta que todos los procesos alcancen este llamado ninguno puede proseguir.*/
-	MPI_Barrier(MPI_COMM_WORLD);
+    printf("Proceso %i de %i corriendo en %s \n", myId, numProcs, processor_name);
 
-	// Proceso 0 se encarga de crear las matrices A y B
-	if(myId == 0) {
-		printf("Ingrese la dimensión de su matriz: ");
-		scanf("%i", &n);
+    /* Barrera de sincronizacion.
+       Hasta que todos los procesos alcancen este llamado ninguno puede proseguir.*/
+    MPI_Barrier(MPI_COMM_WORLD);
 
-		//guarda el tiempo actual, en segundos
-		i_time = MPI_Wtime();
+    // Proceso 0 se encarga de crear las matrices A y B
+    if(myId == 0) {
+        printf("Ingrese la dimensión de su matriz: ");
+        scanf("%i", &n);
 
-		srand(time(NULL));
+        //guarda el tiempo actual, en segundos
+        i_time = MPI_Wtime();
+
+        srand(time(NULL));
 
         //reserva de memoria
         A = (int *) malloc(n * n * sizeof(int)); // matriz de enteros n x n
@@ -177,17 +177,17 @@ void tp(int ac, char** av){
         C = (int *) malloc(n * n * sizeof(int));
 
         // verifica que efectivamente se haya reservado la memoria necesaria
-		if (A==NULL || B==NULL || M == NULL || P==NULL || C==NULL){
+        if (A==NULL || B==NULL || M == NULL || P==NULL || C==NULL){
             fprintf(stderr, "ERROR: La aplicación no pudo reservar memoria para las matrices, por lo que se ha cerrado\n");
             exit(EXIT_FAILURE);
         } else{
             //llena las matrices con valores aleatorios
-			llenarMatrices(n,A,B);
-		}
-	}
+            llenarMatrices(n,A,B);
+        }
+    }
 
-	// propagación del valor n definido por el usuario
-	MPI_Bcast(&n,1,MPI_INT,0,MPI_COMM_WORLD);
+    // propagación del valor n definido por el usuario
+    MPI_Bcast(&n,1,MPI_INT,0,MPI_COMM_WORLD);
 
     //reserva de memoria
     Ax = (int*) malloc(n/numProcs * n * sizeof(int));
@@ -205,9 +205,9 @@ void tp(int ac, char** av){
     int columnas = n;
 
     // Divide A en Ax
-	MPI_Scatter(A,filas*columnas,MPI_INT,
-	           Ax,filas*columnas,MPI_INT,
-	           0,MPI_COMM_WORLD);
+    MPI_Scatter(A,filas*columnas,MPI_INT,
+                Ax,filas*columnas,MPI_INT,
+                0,MPI_COMM_WORLD);
 
     // cada proceso calcula su parte de M (Mx)
     calcularM(Mx,Ax,B,filas,columnas);
@@ -229,9 +229,9 @@ void tp(int ac, char** av){
         }
     }
 
-	/* Barrera de sincronización.
-	   Hasta que todos los procesos alcancen este llamado ninguno puede proseguir.*/
-	MPI_Barrier(MPI_COMM_WORLD);
+    /* Barrera de sincronización.
+       Hasta que todos los procesos alcancen este llamado ninguno puede proseguir.*/
+    MPI_Barrier(MPI_COMM_WORLD);
 
 
 
@@ -242,25 +242,25 @@ void tp(int ac, char** av){
 
 
 
-	//guarda el tiempo actual, en segundos
-    i_time = MPI_Wtime(); 
-	
-	if(myId == 0){
-		printf("\nResultados finales:\n");
-		printf("	Valor de n = %i \n", n);
-		printf("	Número total de procesos que corrieron: %i \n", numProcs);
-		printf("	Total de valores primos en M: %i \n", tp);
-			    
-	    /*El tiempo que tardó desde que ya el usuario comunicó sus valores hasta 
-		  antes de que se desplieguen resultados en pantalla y se escriban los 
-		  archivos de texto. */
-		printf("	Tiempo total de \"procesamiento\": %f segundos. \n", f_time - i_time);
-	
-	//toma el tiempo al momento del final de ejecucion
-    f_time = MPI_Wtime();
-    printf("	Tiempo total: %f segundos. \n", f_ttime - i_ttime);
-    
-    MPI_Finalize();
-}
+    //guarda el tiempo actual, en segundos
+    i_time = MPI_Wtime();
+
+    if(myId == 0){
+        printf("\nResultados finales:\n");
+        printf("	Valor de n = %i \n", n);
+        printf("	Número total de procesos que corrieron: %i \n", numProcs);
+        printf("	Total de valores primos en M: %i \n", tp);
+
+        /*El tiempo que tardó desde que ya el usuario comunicó sus valores hasta
+          antes de que se desplieguen resultados en pantalla y se escriban los
+          archivos de texto. */
+        printf("	Tiempo total de \"procesamiento\": %f segundos. \n", f_time - i_time);
+
+        //toma el tiempo al momento del final de ejecucion
+        f_time = MPI_Wtime();
+        printf("	Tiempo total: %f segundos. \n", f_ttime - i_ttime);
+
+        MPI_Finalize();
+    }
 }
 
