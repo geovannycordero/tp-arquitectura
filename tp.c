@@ -85,6 +85,33 @@ void llenarMatrices(int n, int* A, int* B){
 }
 
 /**
+ * @brief Método utilizado por cada proceso para calcular su parte de M
+ *
+ *      Agregar una descripción más amplia aquí
+ * También aprovechar esta línea ...
+ *
+ * @param Mx Buffer para el cálculo parcial de M
+ * @param Ax Buffer con el subconjunto de filas de la matriz A
+ * @param B Matriz B
+ * @param filas cantidad de filas correspondientes al proceso
+ * @param columnas las n columnas
+ */
+void calcularM(int* Mx, int* Ax, int* B, int filas, int columnas){
+    int fila=0;
+    for (; fila < filas; ++fila) {
+        int columna = 0;
+        for(; columna < columnas; ++columna){
+            int offset = fila * columnas + columna; // índice de acceso de la matriz Mx(fila,columna) = Mx[offset]
+            Mx[offset] = 0; // limpia la basura en memoria
+            int x = 0; //los n elementos de cada fila
+            for(; x < columnas; ++x){
+                Mx[offset] = Mx[offset] + Ax[fila * columnas + x] * B[x * columnas + columna];
+            }
+        }
+    }
+}
+
+/**
  *
  * @param ac
  * @param av
@@ -173,22 +200,9 @@ void tp(int ac, char** av){
     int filas = n/numProcs;
     int columnas = n;
 
-	MPI_Scatter(A,filas*columnas,MPI_INT,Ax,filas*columnas,MPI_INT,0,MPI_COMM_WORLD);
-
-	int fila=0;
-    for (; fila < filas; ++fila) {
-        int columna = 0;
-        for(; columna < columnas; ++columna){
-            int offset = fila * columnas + columna; // índice de acceso de la matriz Mx(fila,columna)
-            Mx[offset] = 0; // limpia la basura en memoria
-            int x = 0;
-            for(; x < columnas; ++x){
-                Mx[offset] = Mx[offset] + Ax[fila * columnas + x] * B[x * columnas + columna];
-            }
-        }
-    }
-
-    MPI_Gather(Mx,filas*columnas,MPI_INT,M,filas*columnas,MPI_INT,0,MPI_COMM_WORLD);
+	MPI_Scatter(A,filas*columnas,MPI_INT,Ax,filas*columnas,MPI_INT,0,MPI_COMM_WORLD); // Divide A en Ax
+    calcularM(Mx,Ax,B,filas,columnas); // cada proceso calcula su parte de M (Mx)
+    MPI_Gather(Mx,filas*columnas,MPI_INT,M,filas*columnas,MPI_INT,0,MPI_COMM_WORLD); // Envía Mx para que se transforme en M
 
     if(myId == 0){
         // imprime M
