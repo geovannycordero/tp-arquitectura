@@ -113,8 +113,10 @@ void calcularM(int* Mx, int* Ax, int* B, int filas, int columnas){
 
 
 int esPrimo(int num){
+	if(num<2){
+		return 1;
+	}
 	int i = 2;
-	int p = 0;
 
 	for(; i< (int) sqrt((double)num) ; i++){
 		if(num%i == 0){ // si num1 módulo de i es 0, incrementamos a en 1.
@@ -249,8 +251,9 @@ void tp(int ac, char** av){
 
 	
     int i=0;
+	tp = 0;
     for (; i < filas*columnas; i++) {
-		if(esPrimo(M[i])){
+		if(!esPrimo(M[i])){
 			P[i%n] = P[i%n] + 1;
 			tp = tp + 1;
 		}
