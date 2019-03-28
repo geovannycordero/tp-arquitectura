@@ -170,10 +170,10 @@ void tp(int ac, char** av){
 		srand(time(NULL));
 
         //reserva de memoria
-        A = (int *) malloc(n * n * sizeof(int)); // reserva de memoria para una matriz de enteros n x n
+        A = (int *) malloc(n * n * sizeof(int)); // matriz de enteros n x n
         B = (int *) malloc(n * n * sizeof(int));
         M = (int *) malloc(n * n * sizeof(int));
-        P = (int *) malloc(n * sizeof(int));     // reserva de memoria para un vector de n entradas
+        P = (int *) malloc(n * sizeof(int));     // vector de n entradas
         C = (int *) malloc(n * n * sizeof(int));
 
         // verifica que efectivamente se haya reservado la memoria necesaria
@@ -181,28 +181,41 @@ void tp(int ac, char** av){
             fprintf(stderr, "ERROR: La aplicación no pudo reservar memoria para las matrices, por lo que se ha cerrado\n");
             exit(EXIT_FAILURE);
         } else{
+            //llena las matrices con valores aleatorios
 			llenarMatrices(n,A,B);
 		}
 	}
 
-	MPI_Bcast(&n,1,MPI_INT,0,MPI_COMM_WORLD); // propagación del valor n definido por el usuario
+	// propagación del valor n definido por el usuario
+	MPI_Bcast(&n,1,MPI_INT,0,MPI_COMM_WORLD);
 
     //reserva de memoria
     Ax = (int*) malloc(n/numProcs * n * sizeof(int));
     Mx = (int*) malloc(n/numProcs * n * sizeof(int));
+
     if(myId!=0){
         B = (int *) malloc(n * n * sizeof(int));
-        P = (int *) malloc(n * sizeof(int));     // reserva de memoria para un vector de n entradas
+        P = (int *) malloc(n * sizeof(int));
     }
 
-    MPI_Bcast(B,(n*n),MPI_INT,0,MPI_COMM_WORLD); // propagación de la totalidad de la matriz B
+    // propagación de la totalidad de la matriz B
+    MPI_Bcast(B,(n*n),MPI_INT,0,MPI_COMM_WORLD);
 
     int filas = n/numProcs;
     int columnas = n;
 
-	MPI_Scatter(A,filas*columnas,MPI_INT,Ax,filas*columnas,MPI_INT,0,MPI_COMM_WORLD); // Divide A en Ax
-    calcularM(Mx,Ax,B,filas,columnas); // cada proceso calcula su parte de M (Mx)
-    MPI_Gather(Mx,filas*columnas,MPI_INT,M,filas*columnas,MPI_INT,0,MPI_COMM_WORLD); // Envía Mx para que se transforme en M
+    // Divide A en Ax
+	MPI_Scatter(A,filas*columnas,MPI_INT,
+	           Ax,filas*columnas,MPI_INT,
+	           0,MPI_COMM_WORLD);
+
+    // cada proceso calcula su parte de M (Mx)
+    calcularM(Mx,Ax,B,filas,columnas);
+
+    // Envía Mx para que se transforme en M
+    MPI_Gather(Mx,filas*columnas,MPI_INT,
+               M,filas*columnas,MPI_INT,
+               0,MPI_COMM_WORLD);
 
     if(myId == 0){
         // imprime M
@@ -216,12 +229,19 @@ void tp(int ac, char** av){
         }
     }
 
-	/* BRETE */
-		
-	/* Barrera de sincronizacion.
+	/* Barrera de sincronización.
 	   Hasta que todos los procesos alcancen este llamado ninguno puede proseguir.*/
 	MPI_Barrier(MPI_COMM_WORLD);
+
 	
+
+
+
+
+
+
+
+
 	//guarda el tiempo actual, en segundos
     i_time = MPI_Wtime(); 
 	
