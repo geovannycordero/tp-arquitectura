@@ -21,8 +21,6 @@
 void tp(int,char**);
 
 
-
-
 //  *** Método de ejecución principal ***
 
 /**
@@ -268,6 +266,28 @@ void tp(int ac, char** av){
     MPI_Barrier(MPI_COMM_WORLD);
 
     // Inicia el recorrido único de la matriz Mx
+    
+    int* cuantos = malloc(numProcs * sizeof(int));
+    int* inicio = malloc(numProcs * sizeof(int));
+    
+    int j = 0;
+    for( ; j < numProcs; ++j){
+    	if(myId == n-1){
+    		cuantos[j] = n / numProcs + 1;
+    	}
+    	else{
+    		cuantos[j] = n / numProcs + 2;
+    	}
+    	
+    	if(myId == 0){
+    		inicio[j] = 0;
+    	}
+    	else if{
+    		inicio[j] = ((n/numProcs) * myId ) -1;
+    	}
+    }
+    
+    MPI_Scatterv(M, cuantos, inicio, cuantos, MPI_INT, My, n/numProcs+2, MPI_INT, 0, MPI_COMM_WORLD);
 
     int i=0;
     tpx = 0; // contador del proceso para el total de números primos en M (tp)
@@ -275,6 +295,9 @@ void tp(int ac, char** av){
         if(esPrimo(Mx[i])){
             Px[i%n] = Px[i%n] + 1; //suma a la columna del vector correspondiente
             tpx = tpx + 1; // suma al contador de números primos
+            
+            //
+            
         }
     }
 
