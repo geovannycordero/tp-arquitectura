@@ -226,7 +226,7 @@ void tp(int ac, char** av){
     Ax = (int*) malloc(n/numProcs * n * sizeof(int));
     Mx = (int*) malloc(n/numProcs * n * sizeof(int));
     Px = (int*) calloc(n , sizeof(int));
-    My = (int*) calloc(((n/numProcs)+2) * (n+2) * sizeof(int)); // matriz My, con dos filas y columnas extra
+    My = (int*) calloc(((n/numProcs)+2) * (n) , sizeof(int)); // matriz My, con dos filas y columnas extra
 
     if(myId!=0){
         B = (int *) malloc(n * n * sizeof(int));
