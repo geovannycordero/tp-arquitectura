@@ -70,7 +70,7 @@ void llenarMatrices(int n, int* A, int* B){
         if(!(i%n)){
             printf("\n\t");
         }
-        printf("%i ", A[i]);
+        printf("\t%i ", A[i]);
     }
 
     // imprime B
@@ -80,7 +80,7 @@ void llenarMatrices(int n, int* A, int* B){
         if(!(i%n)){
             printf("\n\t");
         }
-        printf("%i ", B[i]);
+        printf("\t%i ", B[i]);
     }
 }
 
@@ -118,17 +118,17 @@ void calcularM(int* Mx, int* Ax, int* B, int filas, int columnas){
  * @return
  */
 int esPrimo(int num){
-    if(num<=3){
+    if(num<=3 && num!=0){
         return 1; // num = 0 o 1 o 2 o 3
     } else{
         int i = 2;
         for(; i <= (int)sqrt(num) ; i++){
-			if(!(num%i)){ // si num%i = 0 entonces no es primo
-				return 0;
+            if(!(num%i)){ // si num%i = 0 entonces no es primo
+                return 0;
             }
         }
         return 1; // es primo
-	}
+    }
 }
 
 
@@ -153,13 +153,22 @@ void tp(int ac, char** av){
     char processor_name[MPI_MAX_PROCESSOR_NAME];
 
     int* A; // Matriz con números aleatorios entre 0 y 5
+    int* Ax; // porción de la matriz A que le corresponde a cada proceso
+
     int* B; // Matriz con números aleatorios entre 0 y 2
+
     int* M; // Matriz M = A * B
+    int* Mx; // porción de la matriz M de resultados
+    int* My; // porción de la matriz M ampliada (para calcular C)
+
     int* P; // Vector donde P[i] = cantidad de # primos en la columna i de M
     int* Px; // porción del vector P para cada proceso
+
     int* C; // Matriz donde C[i,j] = M[i,j] + M[i,j-1] + M[i-1,j] + M[i,j+1] + M[i+1,j]
-    int* Ax; // porción de la matriz A que le corresponde a cada proceso
-    int* Mx; // porción de la matriz M de resultados
+    int* Cx; // porción de la matriz C que le corresponde calcular a cada proceso
+
+
+
 
     //se inicia el trabajo con MPI
     MPI_Init(&ac, &av);
@@ -196,6 +205,7 @@ void tp(int ac, char** av){
         A = (int *) malloc(n * n * sizeof(int)); // matriz de enteros n x n
         B = (int *) malloc(n * n * sizeof(int));
         M = (int *) malloc(n * n * sizeof(int));
+
         P = (int *) malloc(n * sizeof(int));     // vector de n entradas
         C = (int *) malloc(n * n * sizeof(int));
 
@@ -216,10 +226,10 @@ void tp(int ac, char** av){
     Ax = (int*) malloc(n/numProcs * n * sizeof(int));
     Mx = (int*) malloc(n/numProcs * n * sizeof(int));
     Px = (int*) calloc(n , sizeof(int));
+    My = (int*) calloc(((n/numProcs)+2) * (n+2) * sizeof(int)); // matriz My, con dos filas y columnas extra
 
     if(myId!=0){
         B = (int *) malloc(n * n * sizeof(int));
-        P = (int *) malloc(n * sizeof(int));
     }
 
     // propagación de la totalidad de la matriz B
@@ -249,7 +259,7 @@ void tp(int ac, char** av){
             if(!(i%n)){
                 printf("\n\t");
             }
-            printf("%i ", M[i]);
+            printf("\t%i ", M[i]);
         }
     }
 
@@ -260,16 +270,16 @@ void tp(int ac, char** av){
     // Inicia el recorrido único de la matriz Mx
 
     int i=0;
-	tpx = 0; // contador del proceso para el total de números primos en M (tp)
+    tpx = 0; // contador del proceso para el total de números primos en M (tp)
     for (; i < filas*columnas; i++) {
-		if(esPrimo(Mx[i])){
-			Px[i%n] = Px[i%n] + 1; //suma a la columna del vector correspondiente
-			tpx = tpx + 1; // suma al contador de números primos
-		}
+        if(esPrimo(Mx[i])){
+            Px[i%n] = Px[i%n] + 1; //suma a la columna del vector correspondiente
+            tpx = tpx + 1; // suma al contador de números primos
+        }
     }
 
-    MPI_Reduce(&tpx,&tp,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD); // envía los datos al proceso ROOT
-    MPI_Reduce(&Px,&P,n,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
+    MPI_Reduce(&tpx,&tp,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD); // envía los datos al proceso ROOT para tp
+    MPI_Reduce(Px,P,n,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD); // envía los datos al proceso ROOT para vector P
 
     //guarda el tiempo actual, en segundos
     i_time = MPI_Wtime();
@@ -277,11 +287,18 @@ void tp(int ac, char** av){
     MPI_Barrier(MPI_COMM_WORLD);
 
     if(myId == 0){
+        // imprime el vector P para checkear los resultados
+        int a = 0;
+        printf("\n");
+        for(;a<n;++a){
+            printf("P[%i]: %i, ", a, P[a]);
+        }
+        printf("\n");
+
         printf("\nResultados finales:\n");
         printf("	Valor de n = %i \n", n);
         printf("	Número total de procesos que corrieron: %i \n", numProcs);
         printf("	Total de valores primos en M: %i \n", tp);
-        printf("    Valores en P[0]: %i y P[1]: %i \n", P[0] , P[1]);
 
         /*El tiempo que tardó desde que ya el usuario comunicó sus valores hasta
           antes de que se desplieguen resultados en pantalla y se escriban los
