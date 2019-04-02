@@ -118,13 +118,13 @@ void calcularM(int* Mx, int* Ax, int* B, int filas, int columnas){
  * @return
  */
 int esPrimo(int num){
-	if(num<=3){
-		return 1; // num = 0 o 1 o 2 o 3
-	} else{
+    if(num<=3){
+        return 1; // num = 0 o 1 o 2 o 3
+    } else{
         int i = 2;
         for(; i <= (int)sqrt(num) ; i++){
-            if(!(num%i)){ // si num%i = 0 entonces no es primo
-                return 0;
+			if(!(num%i)){ // si num%i = 0 entonces no es primo
+				return 0;
             }
         }
         return 1; // es primo
