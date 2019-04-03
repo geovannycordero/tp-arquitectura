@@ -15,11 +15,9 @@
  * @author  Carlos Delgado Rojas        (carlos.delgadorojas@ucr.ac.cr)
  */
 
-
 //  *** Firma de los métodos usados en el programa ***
 
 void tp(int,char**);
-
 
 //  *** Método de ejecución principal ***
 
@@ -35,8 +33,6 @@ int main(int argc, char** argv){
 
     return 0;
 }
-
-
 
 //  *** Implementación de los métodos usados ***
 
@@ -59,26 +55,6 @@ void llenarMatrices(int n, int* A, int* B){
     i = 0;
     for(; i< (n*n) ; i++){
         B[i] = rand() % 3; // llena la matriz B con números entre 0 y 2
-    }
-
-    // imprime A
-    printf("A =");
-    i=0;
-    for (; i < n*n; i++) {
-        if(!(i%n)){
-            printf("\n\t");
-        }
-        printf("\t%i ", A[i]);
-    }
-
-    // imprime B
-    printf("\nB =");
-    i=0;
-    for (; i < n*n; i++) {
-        if(!(i%n)){
-            printf("\n\t");
-        }
-        printf("\t%i ", B[i]);
     }
 }
 
@@ -249,18 +225,6 @@ void tp(int ac, char** av){
                M,filas*columnas,MPI_INT,
                0,MPI_COMM_WORLD);
 
-    if(myId == 0){
-        // imprime M
-        printf("\nM =");
-        int i=0;
-        for (; i < n*n; i++) {
-            if(!(i%n)){
-                printf("\n\t");
-            }
-            printf("\t%i ", M[i]);
-        }
-    }
-
     /* Barrera de sincronización.
        Hasta que todos los procesos alcancen este llamado ninguno puede proseguir.*/
     MPI_Barrier(MPI_COMM_WORLD);
@@ -282,12 +246,12 @@ void tp(int ac, char** av){
     	if(myId == 0){
     		inicio[j] = 0;
     	}
-    	else if{
+    	else{
     		inicio[j] = ((n/numProcs) * myId ) -1;
     	}
     }
     
-    MPI_Scatterv(M, cuantos, inicio, cuantos, MPI_INT, My, n/numProcs+2, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(M, cuantos, inicio, MPI_INT, My, (n/numProcs+2), MPI_INT, 0, MPI_COMM_WORLD);
 
     int i=0;
     tpx = 0; // contador del proceso para el total de números primos en M (tp)
@@ -297,7 +261,36 @@ void tp(int ac, char** av){
             tpx = tpx + 1; // suma al contador de números primos
             
             //
-            
+            if(i < columnas){ //primer fila
+            	if(i == 0){
+            		Cx[filas * (i % n)] = M[i] + M[i+1] + M[(i+1)*columnas];
+            	} else if(i == n){
+            		Cx[filas * (i % n)] = M[i] + M[i-1] + M[(i+1)*columnas];
+            	} else{
+            		Cx[filas * (i % n)] = M[i] + M[i+1] + M[i+1] + M[(i+1)*columnas];
+            	}
+            }
+            else if(i%n == 0 || i%n == filas){ //lados
+            	Cx[filas * (i % n)] = 1;
+            }
+            else{ //casos tuanis
+            	Cx[filas * (i % n)] = 0;
+            }
+            //creo que para el último no hay que hacer un caso especial
+        }
+    }
+    
+    printf("before print\n");
+    
+    if(myId == 0){
+        // imprime M
+        printf("\nC =");
+        int i=0;
+        for (; i < filas*columnas; i++) {
+            if(!(i%n)){
+                printf("\n\t");
+            }
+            printf("\t%i ", Cx[i]);
         }
     }
 
@@ -331,6 +324,40 @@ void tp(int ac, char** av){
         //toma el tiempo al momento del final de ejecucion
         f_time = MPI_Wtime();
         printf("	Tiempo total: %f segundos. \n", f_ttime - i_ttime);
+        
+/*
+	// imprime A
+    printf("A =");
+    i=0;
+    for (; i < n*n; i++) {
+        if(!(i%n)){
+            printf("\n\t");
+        }
+        printf("\t%i ", A[i]);
+    }
+
+    // imprime B
+    printf("\nB =");
+    i=0;
+    for (; i < n*n; i++) {
+        if(!(i%n)){
+            printf("\n\t");
+        }
+        printf("\t%i ", B[i]);
+    }
+    
+    if(myId == 0){
+        // imprime M
+        printf("\nM =");
+        int i=0;
+        for (; i < n*n; i++) {
+            if(!(i%n)){
+                printf("\n\t");
+            }
+            printf("\t%i ", M[i]);
+        }
+    }
+*/
 
         MPI_Finalize();
     }
