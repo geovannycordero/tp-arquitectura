@@ -203,6 +203,7 @@ void tp(int ac, char** av){
 
     if(myId!=0){
         B = (int *) malloc(n * n * sizeof(int));
+        C = (int *) malloc(n * n * sizeof(int));
     }
 
     // propagación de la totalidad de la matriz B
@@ -210,6 +211,7 @@ void tp(int ac, char** av){
 
     int filas = n/numProcs;
     int columnas = n;
+    
 
     // Divide A en Ax
     MPI_Scatter(A,filas*columnas,MPI_INT,
@@ -260,22 +262,39 @@ void tp(int ac, char** av){
 	    }
     }
     
-    if(myId == 0){
-		printf("\ncuantos\n");
-		j = 0;
-		for( ; j < numProcs; ++j){
-			printf(" %i ", cuantos[j]);
-		}
-		
-		printf("\ninicio\n");
-		j = 0;
-		for( ; j < numProcs; ++j){
-			printf(" %i ", inicio[j]);
-		}
-		printf("\n\n");
-	}
+    MPI_Scatterv(M, cuantos, inicio, MPI_INT, My, (n/numProcs+2), MPI_INT, 0, MPI_COMM_WORLD);
     
-    //MPI_Scatterv(M, cuantos, inicio, MPI_INT, My, (n/numProcs+2), MPI_INT, 0, MPI_COMM_WORLD);
+    i = inicio[myId];
+    for( ; i < cuantos[myId]; i++){
+    	j = 0;
+    	for( ; j < columnas; j++){
+    	
+    	
+    		if(i == 0){
+				if(j%columnas == 0){
+					C[i * columnas + j] = My[i * columnas + j] + My[i * columnas + (j+1)] + My[(i+1) * columnas + j];
+				}
+				else if(j%columnas == columnas-1){
+					C[i * columnas + j] = My[i * columnas + j] + My[i * columnas + (j-1)] + My[(i+1) * columnas + j]; // = 2;
+				}
+				else{
+					C[i * columnas + j] = My[i * columnas + j] + My[i * columnas + (j-1)] + My[(i+1) * columnas + j]+ My[i * columnas + (j+1)];// = 3;
+				}
+			}
+			else{
+				if(j%n == 0){
+					C[i * columnas + j] = My[(i-1) * columnas + j] + My[i * columnas + (j+1)] + My[(i+1) * columnas + j] + My[i * columnas + j];// = 4;
+				}
+				else if(j%columnas == columnas-1){
+					C[i * columnas + j] = My[i * columnas + j] + My[(i-1) * columnas + j] + My[i * columnas + (j-1)] + My[(i+1) * columnas + j];// = 5;
+				}
+				else{
+					C[i * columnas + j] = My[i * columnas + j] + My[(i+1) * columnas + j] + My[(i-1) * columnas + j] + My[i * columnas + (j+1)] + My[i * columnas + (j-1)];// = 0;
+				}
+			}
+			
+    	}
+    }
 	
     /* Barrera de sincronización.
        Hasta que todos los procesos alcancen este llamado ninguno puede proseguir.*/
