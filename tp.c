@@ -8,7 +8,7 @@
 /**
  * @brief Archivo en C con la solución a la tarea programada 1
  *
- *      En este archivo se especifica la solución a la tarea programada 1.
+ * En este archivo se especifica la solución a la tarea programada 1.
  * Continuar con la descripción del archivo aquí.
  *
  * @author  Geovanny Cordero Valverde   (geovanny.corderovalverde@ucr.ac.cr)
@@ -92,10 +92,11 @@ void calcularM(int* Mx, int* Ax, int* B, int filas, int columnas){
  * @return
  */
 int esPrimo(int num){
+	int i;
     if(num<=3 && num!=0){
         return 1; // num = 0 o 1 o 2 o 3
     } else{
-        int i = 2;
+        i = 2;
         for(; i <= (int)sqrt(num) ; i++){
             if(!(num%i)){ // si num%i = 0 entonces no es primo
                 return 0;
@@ -104,7 +105,6 @@ int esPrimo(int num){
         return 1; // es primo
     }
 }
-
 
 /**
  *
@@ -119,6 +119,7 @@ void tp(int ac, char** av){
     int n; // dimensión de la matriz (siempre es de tamaño n x n)
     int tp; // cantidad de números primos en M (suma de todos los tpx)
     int tpx; // cantidad de números detectados por cada proceso
+    int i, j; //contadores genéricos
 
     double i_ttime;
     double f_ttime;
@@ -140,8 +141,6 @@ void tp(int ac, char** av){
 
     int* C; // Matriz donde C[i,j] = M[i,j] + M[i,j-1] + M[i-1,j] + M[i,j+1] + M[i+1,j]
     int* Cx; // porción de la matriz C que le corresponde calcular a cada proceso
-
-
 
 
     //se inicia el trabajo con MPI
@@ -231,68 +230,62 @@ void tp(int ac, char** av){
 
     // Inicia el recorrido único de la matriz Mx
     
-    int* cuantos = malloc(numProcs * sizeof(int));
-    int* inicio = malloc(numProcs * sizeof(int));
-    
-    int j = 0;
-    for( ; j < numProcs; ++j){
-    	if(myId == n-1){
-    		cuantos[j] = n / numProcs + 1;
-    	}
-    	else{
-    		cuantos[j] = n / numProcs + 2;
-    	}
-    	
-    	if(myId == 0){
-    		inicio[j] = 0;
-    	}
-    	else{
-    		inicio[j] = ((n/numProcs) * myId ) -1;
-    	}
-    }
-    
-    MPI_Scatterv(M, cuantos, inicio, MPI_INT, My, (n/numProcs+2), MPI_INT, 0, MPI_COMM_WORLD);
-
-    int i=0;
-    tpx = 0; // contador del proceso para el total de números primos en M (tp)
-    for (; i < filas*columnas; i++) {
-        if(esPrimo(Mx[i])){
-            Px[i%n] = Px[i%n] + 1; //suma a la columna del vector correspondiente
-            tpx = tpx + 1; // suma al contador de números primos
-            
-            //
-            if(i < columnas){ //primer fila
-            	if(i == 0){
-            		Cx[filas * (i % n)] = M[i] + M[i+1] + M[(i+1)*columnas];
-            	} else if(i == n){
-            		Cx[filas * (i % n)] = M[i] + M[i-1] + M[(i+1)*columnas];
-            	} else{
-            		Cx[filas * (i % n)] = M[i] + M[i+1] + M[i+1] + M[(i+1)*columnas];
-            	}
-            }
-            else if(i%n == 0 || i%n == filas){ //lados
-            	Cx[filas * (i % n)] = 1;
-            }
-            else{ //casos tuanis
-            	Cx[filas * (i % n)] = 0;
-            }
-            //creo que para el último no hay que hacer un caso especial
-        }
-    }
-    
-    printf("before print\n");
-    
     if(myId == 0){
         // imprime M
-        printf("\nC =");
+        printf("\nM");
         int i=0;
-        for (; i < filas*columnas; i++) {
+        for (; i < n*n; i++) {
             if(!(i%n)){
-                printf("\n\t");
+                printf("\n");
             }
-            printf("\t%i ", Cx[i]);
+            printf("%i ", M[i]);
         }
+        printf("\n");
     }
+    
+    int* cuantos = malloc(numProcs * sizeof(int)); //filas que le tocan a cada proceso
+    int* inicio = malloc(numProcs * sizeof(int)); //fila de inicio de cada proceso
+    
+    if(myId == 0){
+	    j = 0;
+	    for( ; j < numProcs; ++j){
+			if(j == 0){
+				cuantos[j] = filas+1;
+	    		inicio[j] = 0;
+			}
+			else{
+				cuantos[j] = filas + 2;
+	    		inicio[j] = (filas * j + 1);
+			}
+	    	
+	    	if(j == 0){
+	    	}
+	    	else{
+	    	}
+	    }
+    }
+    
+    if(myId == 0){
+		printf("\ncuantos\n");
+		j = 0;
+		for( ; j < numProcs; ++j){
+			printf(" %i ", cuantos[j]);
+		}
+		
+		printf("\ninicio\n");
+		j = 0;
+		for( ; j < numProcs; ++j){
+			printf(" %i ", inicio[j]);
+		}
+		printf("\n\n");
+	}
+    
+    //MPI_Scatterv(M, cuantos, inicio, MPI_INT, My, (n/numProcs+2), MPI_INT, 0, MPI_COMM_WORLD);
+	
+    /* Barrera de sincronización.
+       Hasta que todos los procesos alcancen este llamado ninguno puede proseguir.*/
+    MPI_Barrier(MPI_COMM_WORLD);
+    
 
     MPI_Reduce(&tpx,&tp,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD); // envía los datos al proceso ROOT para tp
     MPI_Reduce(Px,P,n,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD); // envía los datos al proceso ROOT para vector P
