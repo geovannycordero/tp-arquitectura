@@ -250,18 +250,13 @@ void tp(int ac, char** av){
 	    j = 0;
 	    for( ; j < numProcs; ++j){
 			if(j == 0){
-				cuantos[j] = filas+1;
+				cuantos[j] = filas + 1;
 	    		inicio[j] = 0;
 			}
 			else{
 				cuantos[j] = filas + 2;
-	    		inicio[j] = (filas * j + 1);
+	    		inicio[j] = ((columnas * j) / numProcs) - 1;
 			}
-	    	
-	    	if(j == 0){
-	    	}
-	    	else{
-	    	}
 	    }
     }
     
