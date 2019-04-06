@@ -245,10 +245,14 @@ void tp(int ac, char** av){
         printf("\n");
     }
     
-    int* cuantos = malloc(numProcs * sizeof(int)); //filas que le tocan a cada proceso
-    int* inicio = malloc(numProcs * sizeof(int)); //fila de inicio de cada proceso
+    int* cuantos; //filas que le tocan a cada proceso
+    int* inicio; //fila de inicio de cada proceso
     
     if(myId == 0){
+    
+    	cuantos = malloc(numProcs * sizeof(int));
+	    inicio = malloc(numProcs * sizeof(int));	
+    
 	    j = 0;
 	    for( ; j < numProcs; ++j){
 			if(j == 0){
@@ -260,12 +264,37 @@ void tp(int ac, char** av){
 	    		inicio[j] = ((columnas * j) / numProcs) - 1;
 			}
 	    }
+	    
+	    j = 0; printf("\ncuantos\n");
+	    for( ; j < numProcs; ++j){
+	    	printf("%i ", cuantos[i]);
+	    }
+	    
+	    printf("\n ");
+	    
+	    j = 0; printf("inicio\n");
+	    for( ; j < numProcs; ++j){
+	    	printf("%i ", inicio[i]);
+	    }
+	    
+	    printf("\n\n");
+	    
     }
     
-    MPI_Scatterv(M, cuantos, inicio, MPI_INT, My, (n/numProcs+2), MPI_INT, 0, MPI_COMM_WORLD);
+    if(myId != 0){
+    	cuantos = malloc(numProcs * sizeof(int));
+	    inicio = malloc(numProcs * sizeof(int));
+    }
+    
+    MPI_Barrier(MPI_COMM_WORLD);
+    
+    MPI_Scatterv(M, cuantos, inicio, MPI_INT, My, (filas+2), MPI_INT, 0, MPI_COMM_WORLD);
     
     i = inicio[myId];
-    for( ; i < cuantos[myId]; i++){
+    int des = inicio[myId] + cuantos[myId];
+    printf("des = %i \n", des);
+    
+    for( ; i < des; i++){
     	j = 0;
     	for( ; j < columnas; j++){
     	
@@ -365,6 +394,19 @@ void tp(int ac, char** av){
         }
     }
 */
+    
+   free(cuantos);
+   free(inicio);
+   free(C);
+   free(Cx);
+   free(P);
+   free(Px);
+   free(M);
+   free(Mx);
+   free(My);
+   free(A);
+   free(Ax);
+   free(B);
 
         MPI_Finalize();
     }
