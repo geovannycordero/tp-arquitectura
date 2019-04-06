@@ -261,32 +261,35 @@ void tp(int ac, char** av){
 			}
 			else{
 				cuantos[j] = filas + 2;
-	    		inicio[j] = ((columnas * j) / numProcs) - 1;
+	    		inicio[j] = ((n * j) / numProcs) - 1;
 			}
 	    }
 	    
 	    j = 0; printf("\ncuantos\n");
 	    for( ; j < numProcs; ++j){
-	    	printf("%i ", cuantos[i]);
+	    	printf("%i ", cuantos[j]);
 	    }
 	    
 	    printf("\n ");
 	    
 	    j = 0; printf("inicio\n");
 	    for( ; j < numProcs; ++j){
-	    	printf("%i ", inicio[i]);
+	    	printf("%i ", inicio[j]);
 	    }
 	    
 	    printf("\n\n");
 	    
     }
     
-    if(myId != 0){
+    MPI_Barrier(MPI_COMM_WORLD);
+
+
+/***********************************
+
+	if(myId != 0){
     	cuantos = malloc(numProcs * sizeof(int));
 	    inicio = malloc(numProcs * sizeof(int));
     }
-    
-    MPI_Barrier(MPI_COMM_WORLD);
     
     MPI_Scatterv(M, cuantos, inicio, MPI_INT, My, (filas+2), MPI_INT, 0, MPI_COMM_WORLD);
     
@@ -324,6 +327,8 @@ void tp(int ac, char** av){
 			
     	}
     }
+*******************************/
+	
 	
     /* Barrera de sincronización.
        Hasta que todos los procesos alcancen este llamado ninguno puede proseguir.*/
@@ -394,7 +399,8 @@ void tp(int ac, char** av){
         }
     }
 */
-    
+
+/*   
    free(cuantos);
    free(inicio);
    free(C);
@@ -407,7 +413,7 @@ void tp(int ac, char** av){
    free(A);
    free(Ax);
    free(B);
-
+*/
         MPI_Finalize();
     }
 }
