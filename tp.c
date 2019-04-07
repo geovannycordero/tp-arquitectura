@@ -265,37 +265,19 @@ void tp(int ac, char** av){
 			}
 	    }
 	    
-	    j = 0; printf("\ncuantos\n");
-	    for( ; j < numProcs; ++j){
-	    	printf("%i ", cuantos[j]);
-	    }
-	    
-	    printf("\n ");
-	    
-	    j = 0; printf("inicio\n");
-	    for( ; j < numProcs; ++j){
-	    	printf("%i ", inicio[j]);
-	    }
-	    
-	    printf("\n\n");
-	    
     }
-    
+
     MPI_Barrier(MPI_COMM_WORLD);
     
     MPI_Scatterv(M, cuantos, inicio, MPI_INT, My, (filas+2), MPI_INT, 0, MPI_COMM_WORLD);
     
-    printf("Proceso %i con %i filas y iniciando en %i \n", myId, cuantos[myId], inicio[myId]);
+    MPI_Bcast(cuantos,numProcs,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(inicio,numProcs,MPI_INT,0,MPI_COMM_WORLD);
+    
+    
+    printf("Proceso %i con c =  %i y f = %i \n", myId, cuantos[myId], inicio[myId]);
+    
 
-/***********************************
-
-	if(myId != 0){
-    	cuantos = malloc(numProcs * sizeof(int));
-	    inicio = malloc(numProcs * sizeof(int));
-    }
-    
-    
-    
     i = inicio[myId];
     int des = inicio[myId] + cuantos[myId];
     printf("des = %i \n", des);
@@ -330,7 +312,6 @@ void tp(int ac, char** av){
 			
     	}
     }
-*******************************/
 	
 	
     /* Barrera de sincronización.
