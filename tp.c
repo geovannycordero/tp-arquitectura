@@ -248,10 +248,10 @@ void tp(int ac, char** av){
     int* cuantos; //filas que le tocan a cada proceso
     int* inicio; //fila de inicio de cada proceso
     
-    if(myId == 0){
+    cuantos = malloc(numProcs * sizeof(int));
+    inicio = malloc(numProcs * sizeof(int));
     
-    	cuantos = malloc(numProcs * sizeof(int));
-	    inicio = malloc(numProcs * sizeof(int));	
+    if(myId == 0){	
     
 	    j = 0;
 	    for( ; j < numProcs; ++j){
@@ -282,7 +282,10 @@ void tp(int ac, char** av){
     }
     
     MPI_Barrier(MPI_COMM_WORLD);
-
+    
+    MPI_Scatterv(M, cuantos, inicio, MPI_INT, My, (filas+2), MPI_INT, 0, MPI_COMM_WORLD);
+    
+    printf("Proceso %i con %i filas y iniciando en %i \n", myId, cuantos[myId], inicio[myId]);
 
 /***********************************
 
@@ -291,7 +294,7 @@ void tp(int ac, char** av){
 	    inicio = malloc(numProcs * sizeof(int));
     }
     
-    MPI_Scatterv(M, cuantos, inicio, MPI_INT, My, (filas+2), MPI_INT, 0, MPI_COMM_WORLD);
+    
     
     i = inicio[myId];
     int des = inicio[myId] + cuantos[myId];
