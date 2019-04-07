@@ -255,11 +255,15 @@ void tp(int ac, char** av){
 	    j = 0;
 	    for( ; j < numProcs; ++j){
 			if(j == 0){
-				cuantos[j] = (filas + 1)*n;
+				cuantos[j] = (filas + 1) * n;
 	    		inicio[j] = 0;
 			}
+			else if(j == numProcs-1){
+				cuantos[j] = (filas + 1) * n;		
+				inicio[j] = ((n * j) / numProcs) - 1;
+			}
 			else{
-				cuantos[j] = (filas + 2)*n;
+				cuantos[j] = (filas + 2) * n;
 	    		inicio[j] = ((n * j) / numProcs) - 1;
 			}
 	    }
@@ -285,26 +289,24 @@ void tp(int ac, char** av){
     //printf("Process  %i  starts at  %i  and has  %i  rows\n", myId, i, des);
     
     for( ; i < des; i++){
-    	j = 0;//printf("i = %i \n", i);;
+
+    	j = 0;
     	for( ; j < columnas; j++){
 
-    		if(i == 0){
+    		if(i == 0){					// funciona
 				if(j%columnas == 0){
-					//printf("C[%i, %i] = %i + %i + %i \tby %i \n", i,j, My[i * columnas + j], My[i * columnas + (j+1)], My[(i+1) * columnas + j], myId);
 					C[i * columnas + j] = 
 						My[i * columnas + j] + 
 						My[i * columnas + (j+1)] + 
 						My[(i+1) * columnas + j]; // no se suma
 				}
 				else if(j%columnas == columnas-1){
-					//printf("C[%i, %i] = %i + %i + %i \tby %i\n", i,j, My[i * columnas + j], My[i * columnas + (j-1)], My[(i+1) * columnas + j], myId);
 					C[i * columnas + j] = 
 						My[i * columnas + j] + 
 						My[i * columnas + (j-1)] + 
 						My[(i+1) * columnas + j]; // = 2;
 				}
 				else{
-					//printf("C[%i, %i] = %i + %i + %i \tby %i\n", i,j, My[i * columnas + j], My[i * columnas + (j-1)], My[(i+1) * columnas + j], My[i * columnas + (j+1)], myId);
 					C[i * columnas + j] = 
 						My[i * columnas + j] + 
 						My[i * columnas + (j-1)] + 
@@ -312,8 +314,7 @@ void tp(int ac, char** av){
 						My[i * columnas + (j+1)];// = 3;
 				}
 			}
-			else if(i > 0){
-			//else{
+			else{
 				if(j%n == 0){
 					//printf("C[%i, %i] = %i + %i + %i \tby %i\n", i,j, My[i * columnas + j], My[(i-1) * columnas + j], My[i * columnas + (j+1)], My[(i+1) * columnas + j], myId);
 					
@@ -340,9 +341,6 @@ void tp(int ac, char** av){
 						My[i * columnas + (j+1)] + 
 						My[i * columnas + (j-1)];// = 0;
 				}
-			}
-			else{
-				printf("Warning: out of bounds!\n");
 			}
     	}
     }
