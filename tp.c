@@ -199,7 +199,7 @@ void tp(int ac, char** av){
     Ax = (int*) malloc(n/numProcs * n * sizeof(int));
     Mx = (int*) malloc(n/numProcs * n * sizeof(int));
     Px = (int*) calloc(n , sizeof(int));
-    My = (int*) calloc(((n/numProcs)+2) * (n) , sizeof(int)); // matriz My, con dos filas y columnas extra
+    My = (int*) calloc(((n/numProcs)+2) * n, sizeof(int)); // matriz My, con dos filas y columnas extra
 
     if(myId!=0){
         B = (int *) malloc(n * n * sizeof(int));
@@ -251,65 +251,99 @@ void tp(int ac, char** av){
     cuantos = malloc(numProcs * sizeof(int));
     inicio = malloc(numProcs * sizeof(int));
     
-    if(myId == 0){	
-    
+    if(myId == 0){
 	    j = 0;
 	    for( ; j < numProcs; ++j){
 			if(j == 0){
-				cuantos[j] = filas + 1;
+				cuantos[j] = (filas + 1)*n;
 	    		inicio[j] = 0;
 			}
 			else{
-				cuantos[j] = filas + 2;
+				cuantos[j] = (filas + 2)*n;
 	    		inicio[j] = ((n * j) / numProcs) - 1;
 			}
 	    }
-	    
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
     
-    MPI_Scatterv(M, cuantos, inicio, MPI_INT, My, (filas+2), MPI_INT, 0, MPI_COMM_WORLD);
-    
     MPI_Bcast(cuantos,numProcs,MPI_INT,0,MPI_COMM_WORLD);
     MPI_Bcast(inicio,numProcs,MPI_INT,0,MPI_COMM_WORLD);
     
+    MPI_Scatterv(M, cuantos, inicio, MPI_INT, My, (filas+2)*n, MPI_INT, 0, MPI_COMM_WORLD);   
+       
     
-    printf("Proceso %i con c =  %i y f = %i \n", myId, cuantos[myId], inicio[myId]);
+    MPI_Barrier(MPI_COMM_WORLD);
     
-
     i = inicio[myId];
-    int des = inicio[myId] + cuantos[myId];
-    printf("des = %i \n", des);
+    int des = cuantos[myId];
+    
+	MPI_Barrier(MPI_COMM_WORLD);
+    
+    //int des = cuantos[myId] - inicio[myId];
+    
+    //printf("Process  %i  starts at  %i  and has  %i  rows\n", myId, i, des);
     
     for( ; i < des; i++){
-    	j = 0;
+    	j = 0;//printf("i = %i \n", i);;
     	for( ; j < columnas; j++){
-    	
-    	
+
     		if(i == 0){
 				if(j%columnas == 0){
-					C[i * columnas + j] = My[i * columnas + j] + My[i * columnas + (j+1)] + My[(i+1) * columnas + j];
+					//printf("C[%i, %i] = %i + %i + %i \tby %i \n", i,j, My[i * columnas + j], My[i * columnas + (j+1)], My[(i+1) * columnas + j], myId);
+					C[i * columnas + j] = 
+						My[i * columnas + j] + 
+						My[i * columnas + (j+1)] + 
+						My[(i+1) * columnas + j]; // no se suma
 				}
 				else if(j%columnas == columnas-1){
-					C[i * columnas + j] = My[i * columnas + j] + My[i * columnas + (j-1)] + My[(i+1) * columnas + j]; // = 2;
+					//printf("C[%i, %i] = %i + %i + %i \tby %i\n", i,j, My[i * columnas + j], My[i * columnas + (j-1)], My[(i+1) * columnas + j], myId);
+					C[i * columnas + j] = 
+						My[i * columnas + j] + 
+						My[i * columnas + (j-1)] + 
+						My[(i+1) * columnas + j]; // = 2;
 				}
 				else{
-					C[i * columnas + j] = My[i * columnas + j] + My[i * columnas + (j-1)] + My[(i+1) * columnas + j]+ My[i * columnas + (j+1)];// = 3;
+					//printf("C[%i, %i] = %i + %i + %i \tby %i\n", i,j, My[i * columnas + j], My[i * columnas + (j-1)], My[(i+1) * columnas + j], My[i * columnas + (j+1)], myId);
+					C[i * columnas + j] = 
+						My[i * columnas + j] + 
+						My[i * columnas + (j-1)] + 
+						My[(i+1) * columnas + j]+ 
+						My[i * columnas + (j+1)];// = 3;
+				}
+			}
+			else if(i > 0){
+			//else{
+				if(j%n == 0){
+					//printf("C[%i, %i] = %i + %i + %i \tby %i\n", i,j, My[i * columnas + j], My[(i-1) * columnas + j], My[i * columnas + (j+1)], My[(i+1) * columnas + j], myId);
+					
+					C[i * columnas + j] = 
+						My[i * columnas + j] + 
+						My[(i-1) * columnas + j] + 
+						My[i * columnas + (j+1)] + 
+						My[(i+1) * columnas + j];// = 4;
+				}
+				else if(j%columnas == columnas-1){
+					//printf("C[%i, %i] = %i + %i + %i \tby %i\n", i,j, My[i * columnas + j], My[(i-1) * columnas + j], My[i * columnas + (j-1)], My[(i+1) * columnas + j], myId);
+					C[i * columnas + j] = 
+						My[i * columnas + j] + 
+						My[(i-1) * columnas + j] + 
+						My[i * columnas + (j-1)] + 
+						My[(i+1) * columnas + j];// = 5;
+				}
+				else{
+					//printf("C[%i, %i] = %i + %i + %i \tby %i\n", i,j, My[i * columnas + j], My[(i+1) * columnas + j], My[(i-1) * columnas + j], My[i * columnas + (j+1)], My[i * columnas + (j-1)], myId);
+					C[i * columnas + j] = 
+						My[i * columnas + j] + 
+						My[(i+1) * columnas + j] + 
+						My[(i-1) * columnas + j] + 
+						My[i * columnas + (j+1)] + 
+						My[i * columnas + (j-1)];// = 0;
 				}
 			}
 			else{
-				if(j%n == 0){
-					C[i * columnas + j] = My[(i-1) * columnas + j] + My[i * columnas + (j+1)] + My[(i+1) * columnas + j] + My[i * columnas + j];// = 4;
-				}
-				else if(j%columnas == columnas-1){
-					C[i * columnas + j] = My[i * columnas + j] + My[(i-1) * columnas + j] + My[i * columnas + (j-1)] + My[(i+1) * columnas + j];// = 5;
-				}
-				else{
-					C[i * columnas + j] = My[i * columnas + j] + My[(i+1) * columnas + j] + My[(i-1) * columnas + j] + My[i * columnas + (j+1)] + My[i * columnas + (j-1)];// = 0;
-				}
+				printf("Warning: out of bounds!\n");
 			}
-			
     	}
     }
 	
@@ -317,6 +351,18 @@ void tp(int ac, char** av){
     /* Barrera de sincronización.
        Hasta que todos los procesos alcancen este llamado ninguno puede proseguir.*/
     MPI_Barrier(MPI_COMM_WORLD);
+    
+    if(myId == 0){
+	    printf("\nC");
+	    i = 0;
+	    for (; i < n*n; i++) {
+	        if(!(i%n)){
+	            printf("\n");
+	        }
+	        printf("%i ", C[i]);
+	    }
+	    printf("\n");
+    }
     
 
     MPI_Reduce(&tpx,&tp,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD); // envía los datos al proceso ROOT para tp
@@ -327,6 +373,8 @@ void tp(int ac, char** av){
 
     MPI_Barrier(MPI_COMM_WORLD);
 
+
+/*
     if(myId == 0){
         // imprime el vector P para checkear los resultados
         int a = 0;
@@ -343,14 +391,13 @@ void tp(int ac, char** av){
 
         /*El tiempo que tardó desde que ya el usuario comunicó sus valores hasta
           antes de que se desplieguen resultados en pantalla y se escriban los
-          archivos de texto. */
-        printf("	Tiempo total de \"procesamiento\": %f segundos. \n", f_time - i_time);
+          archivos de texto. *
 
         //toma el tiempo al momento del final de ejecucion
         f_time = MPI_Wtime();
         printf("	Tiempo total: %f segundos. \n", f_ttime - i_ttime);
         
-/*
+
 	// imprime A
     printf("A =");
     i=0;
@@ -399,6 +446,6 @@ void tp(int ac, char** av){
    free(B);
 */
         MPI_Finalize();
-    }
+    //}
 }
 
