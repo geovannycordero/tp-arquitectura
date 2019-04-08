@@ -275,30 +275,26 @@ void tp(int ac, char** av){
     MPI_Bcast(inicio,numProcs,MPI_INT,0,MPI_COMM_WORLD);
     
     MPI_Scatterv(M, cuantos, inicio, MPI_INT, My, (filas+2)*n, MPI_INT, 0, MPI_COMM_WORLD);   
-       
-    
-    MPI_Barrier(MPI_COMM_WORLD);
     
     i = inicio[myId];
     int des = cuantos[myId];
-    
-	MPI_Barrier(MPI_COMM_WORLD);
-    
-    //int des = cuantos[myId] - inicio[myId];
-    
-    //printf("Process  %i  starts at  %i  and has  %i  rows\n", myId, i, des);
-    
+        
     for( ; i < des; i++){
 
     	j = 0;
     	for( ; j < columnas; j++){
-
+		
+			/*if(esPrimo(My[i * columnas + j])){
+	            Px[i%n] = Px[i%n] + 1; //suma a la columna del vector correspondiente
+	            tpx = tpx + 1; // suma al contador de números primos
+	        }*/
+	        
     		if(i == 0){					// funciona
 				if(j%columnas == 0){
 					C[i * columnas + j] = 
 						My[i * columnas + j] + 
 						My[i * columnas + (j+1)] + 
-						My[(i+1) * columnas + j]; // no se suma
+						My[(i+1) * columnas + j]; 
 				}
 				else if(j%columnas == columnas-1){
 					C[i * columnas + j] = 
@@ -314,10 +310,8 @@ void tp(int ac, char** av){
 						My[i * columnas + (j+1)];// = 3;
 				}
 			}
-			else{
+			else{					// con problemas
 				if(j%n == 0){
-					//printf("C[%i, %i] = %i + %i + %i \tby %i\n", i,j, My[i * columnas + j], My[(i-1) * columnas + j], My[i * columnas + (j+1)], My[(i+1) * columnas + j], myId);
-					
 					C[i * columnas + j] = 
 						My[i * columnas + j] + 
 						My[(i-1) * columnas + j] + 
@@ -325,7 +319,8 @@ void tp(int ac, char** av){
 						My[(i+1) * columnas + j];// = 4;
 				}
 				else if(j%columnas == columnas-1){
-					//printf("C[%i, %i] = %i + %i + %i \tby %i\n", i,j, My[i * columnas + j], My[(i-1) * columnas + j], My[i * columnas + (j-1)], My[(i+1) * columnas + j], myId);
+					if((i) == sqrt(n) && (j) == sqrt(n)){
+					printf("C[%i, %i] = %i + %i + %i \tby %i\n", i,j, My[i * columnas + j], My[(i-1) * columnas + j], My[i * columnas + (j-1)], My[(i+1) * columnas + j], myId);}
 					C[i * columnas + j] = 
 						My[i * columnas + j] + 
 						My[(i-1) * columnas + j] + 
@@ -333,7 +328,6 @@ void tp(int ac, char** av){
 						My[(i+1) * columnas + j];// = 5;
 				}
 				else{
-					//printf("C[%i, %i] = %i + %i + %i \tby %i\n", i,j, My[i * columnas + j], My[(i+1) * columnas + j], My[(i-1) * columnas + j], My[i * columnas + (j+1)], My[i * columnas + (j-1)], myId);
 					C[i * columnas + j] = 
 						My[i * columnas + j] + 
 						My[(i+1) * columnas + j] + 
@@ -360,8 +354,7 @@ void tp(int ac, char** av){
 	        printf("%i ", C[i]);
 	    }
 	    printf("\n");
-    }
-    
+    }    
 
     MPI_Reduce(&tpx,&tp,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD); // envía los datos al proceso ROOT para tp
     MPI_Reduce(Px,P,n,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD); // envía los datos al proceso ROOT para vector P
@@ -372,7 +365,7 @@ void tp(int ac, char** av){
     MPI_Barrier(MPI_COMM_WORLD);
 
 
-/*
+
     if(myId == 0){
         // imprime el vector P para checkear los resultados
         int a = 0;
@@ -389,61 +382,14 @@ void tp(int ac, char** av){
 
         /*El tiempo que tardó desde que ya el usuario comunicó sus valores hasta
           antes de que se desplieguen resultados en pantalla y se escriban los
-          archivos de texto. *
+          archivos de texto. */
 
         //toma el tiempo al momento del final de ejecucion
         f_time = MPI_Wtime();
         printf("	Tiempo total: %f segundos. \n", f_ttime - i_ttime);
         
-
-	// imprime A
-    printf("A =");
-    i=0;
-    for (; i < n*n; i++) {
-        if(!(i%n)){
-            printf("\n\t");
-        }
-        printf("\t%i ", A[i]);
-    }
-
-    // imprime B
-    printf("\nB =");
-    i=0;
-    for (; i < n*n; i++) {
-        if(!(i%n)){
-            printf("\n\t");
-        }
-        printf("\t%i ", B[i]);
     }
     
-    if(myId == 0){
-        // imprime M
-        printf("\nM =");
-        int i=0;
-        for (; i < n*n; i++) {
-            if(!(i%n)){
-                printf("\n\t");
-            }
-            printf("\t%i ", M[i]);
-        }
-    }
-*/
-
-/*   
-   free(cuantos);
-   free(inicio);
-   free(C);
-   free(Cx);
-   free(P);
-   free(Px);
-   free(M);
-   free(Mx);
-   free(My);
-   free(A);
-   free(Ax);
-   free(B);
-*/
-        MPI_Finalize();
-    //}
+    MPI_Finalize();
 }
 
