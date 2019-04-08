@@ -56,6 +56,26 @@ void llenarMatrices(int n, int* A, int* B){
     for(; i< (n*n) ; i++){
         B[i] = rand() % 3; // llena la matriz B con números entre 0 y 2
     }
+
+    // imprime A
+    printf("A =");
+    i=0;
+    for (; i < n*n; i++) {
+        if(!(i%n)){
+            printf("\n");
+        }
+        printf("\t%i ", A[i]);
+    }
+
+    // imprime B
+    printf("\nB =");
+    i=0;
+    for (; i < n*n; i++) {
+        if(!(i%n)){
+            printf("\n");
+        }
+        printf("\t%i ", B[i]);
+    }
 }
 
 /**
@@ -234,13 +254,13 @@ void tp(int ac, char** av){
     
     if(myId == 0){
         // imprime M
-        printf("\nM");
+        printf("\nM=");
         int i=0;
         for (; i < n*n; i++) {
             if(!(i%n)){
                 printf("\n");
             }
-            printf("%i ", M[i]);
+            printf("\t%i ", M[i]);
         }
         printf("\n");
     }
@@ -260,11 +280,11 @@ void tp(int ac, char** av){
 			}
 			else if(j == numProcs-1){
 				cuantos[j] = (filas + 1) * n;		
-				inicio[j] = ((n * j) / numProcs) - 1;
+				inicio[j] = (filas * j - 1) * n;
 			}
 			else{
 				cuantos[j] = (filas + 2) * n;
-	    		inicio[j] = ((n * j) / numProcs) - 1;
+	    		inicio[j] = (filas * j - 1) * n;
 			}
 	    }
     }
@@ -274,9 +294,9 @@ void tp(int ac, char** av){
     MPI_Bcast(cuantos,numProcs,MPI_INT,0,MPI_COMM_WORLD);
     MPI_Bcast(inicio,numProcs,MPI_INT,0,MPI_COMM_WORLD);
     
-    MPI_Scatterv(M, cuantos, inicio, MPI_INT, My, (filas+2)*n, MPI_INT, 0, MPI_COMM_WORLD);   
-    
-    i = inicio[myId];
+    MPI_Scatterv(M, cuantos, inicio, MPI_INT, My, (filas+2)*n, MPI_INT, 0, MPI_COMM_WORLD);
+
+    i = 0;
     int des = cuantos[myId];
         
     for( ; i < des; i++){
@@ -289,7 +309,7 @@ void tp(int ac, char** av){
 	            tpx = tpx + 1; // suma al contador de números primos
 	        }*/
 	        
-    		if(i == 0){					// funciona
+    		if(i == 0){
 				if(j%columnas == 0){
 					C[i * columnas + j] = 
 						My[i * columnas + j] + 
@@ -345,13 +365,13 @@ void tp(int ac, char** av){
     MPI_Barrier(MPI_COMM_WORLD);
     
     if(myId == 0){
-	    printf("\nC");
+	    printf("\nC=");
 	    i = 0;
 	    for (; i < n*n; i++) {
 	        if(!(i%n)){
 	            printf("\n");
 	        }
-	        printf("%i ", C[i]);
+	        printf("\t%i ", C[i]);
 	    }
 	    printf("\n");
     }    
