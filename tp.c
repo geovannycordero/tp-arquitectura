@@ -56,26 +56,6 @@ void llenarMatrices(int n, int* A, int* B){
     for(; i< (n*n) ; i++){
         B[i] = rand() % 3; // llena la matriz B con números entre 0 y 2
     }
-
-    // imprime A
-    printf("A =");
-    i=0;
-    for (; i < n*n; i++) {
-        if(!(i%n)){
-            printf("\n");
-        }
-        printf("\t%i ", A[i]);
-    }
-
-    // imprime B
-    printf("\nB =");
-    i=0;
-    for (; i < n*n; i++) {
-        if(!(i%n)){
-            printf("\n");
-        }
-        printf("\t%i ", B[i]);
-    }
 }
 
 /**
@@ -139,7 +119,7 @@ void tp(int ac, char** av){
     int n; // dimensión de la matriz (siempre es de tamaño n x n)
     int tp; // cantidad de números primos en M (suma de todos los tpx)
     int tpx; // cantidad de números detectados por cada proceso
-    int i, j; //contadores genéricos
+    int i, j, des; //contadores genéricos
 
 	double i_time, f_time;
     double i_ttime, f_ttime;
@@ -252,19 +232,6 @@ void tp(int ac, char** av){
 
     // Inicia el recorrido único de la matriz Mx
 
-    if(myId == 0){
-        // imprime M
-        printf("\nM=");
-        int i=0;
-        for (; i < n*n; i++) {
-            if(!(i%n)){
-                printf("\n");
-            }
-            printf("\t%i ", M[i]);
-        }
-        printf("\n");
-    }
-
     int* cuantos; //filas que le tocan a cada proceso
     int* inicio; //fila de inicio de cada proceso
 
@@ -299,7 +266,8 @@ void tp(int ac, char** av){
     } else {
         i = n;
     }
-    int des = 0;
+    
+    des = 0;
     if(myId != 0){
         des = (filas*n)+n; //cantidad de desplazamientos
     } else{
@@ -347,18 +315,6 @@ void tp(int ac, char** av){
                C,filas*columnas,MPI_INT,
                0,MPI_COMM_WORLD);
 
-    if(myId == 0){
-        printf("\nC=");
-        i = 0;
-        for (; i < n*n; i++) {
-            if(!(i%n)){
-                printf("\n");
-            }
-            printf("\t%i ", C[i]);
-        }
-        printf("\n");
-    }
-
     MPI_Reduce(&tpx,&tp,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD); // envía los datos al proceso ROOT para tp
     MPI_Reduce(Px,P,n,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD); // envía los datos al proceso ROOT para vector P
 
@@ -367,15 +323,7 @@ void tp(int ac, char** av){
 
     MPI_Barrier(MPI_COMM_WORLD);
     
-    //
-
     if(myId == 0){
-        // imprime el vector P para checkear los resultados
-        int a = 0;
-        printf("\n");
-        for(;a<n;++a){
-            printf("P[%i]: %i, ", a, P[a]);
-        }
 
         printf("\nResultados finales:\n");
         printf("\tValor de n = %i \n", n);
@@ -385,11 +333,73 @@ void tp(int ac, char** av){
         /*El tiempo que tardó desde que ya el usuario comunicó sus valores hasta
           antes de que se desplieguen resultados en pantalla y se escriban los
           archivos de texto. */
-          printf("	Tiempo parcial: %f segundos. \n", f_time - i_time);
-
-        //toma el tiempo al momento del final de ejecucion
-        f_ttime = MPI_Wtime();
-        printf("	Tiempo total: %f segundos. \n", f_ttime - i_ttime);
+        printf("	Tiempo parcial: %f segundos. \n", f_time - i_time);
+        
+        if(n > 5){
+        	FILE *f;
+        	
+        	f = fopen("resultados.txt", "w");
+        	if(f == NULL){
+        		perror("Error opening file");
+        	}
+        	
+        	fprintf(f,"%s%s%s", "Carlos Delgado Rojas\n",
+        					"Geovanny Cordero Valverde\n\n",
+			        		"Archivo con resultados\n\n\n");
+        	
+        	fprintf(f,"%s","Matriz A:\n");
+	        i = 0;
+	        for (; i < n*n; i++) {
+	            if(!(i%n)){
+	                fprintf(f,"%s","\n");
+	            }
+	            fprintf(f,"%i\t",C[i]);
+	        }
+     	    fprintf(f,"%s","\n\n");
+     	    
+     	    fprintf(f,"%s","Matriz B:\n");
+	        i = 0;
+	        for (; i < n*n; i++) {
+	            if(!(i%n)){
+	                fprintf(f,"%s","\n");
+	            }
+	            fprintf(f,"%i\t",B[i]);
+	        }
+     	    fprintf(f,"%s","\n\n");
+     	    
+     	    fprintf(f,"%s","Matriz M:\n");
+	        i = 0;
+	        for (; i < n*n; i++) {
+	            if(!(i%n)){
+	                fprintf(f,"%s","\n");
+	            }
+	            fprintf(f,"%i\t",M[i]);
+	        }
+     	    fprintf(f,"%s","\n\n");
+     	    
+     	    fprintf(f,"%s","Vector P:\n");
+     	    i = 0;
+	        for (; i < n; i++) {
+	            fprintf(f,"%i\t",P[i]);
+	        }
+     	    fprintf(f,"%s","\n\n");
+        	
+        	fprintf(f,"%s","Matriz C:\n");
+	        i = 0;
+	        for (; i < n*n; i++) {
+	            if(!(i%n)){
+	                fprintf(f,"%s","\n");
+	            }
+	            fprintf(f,"%i\t",C[i]);
+	        }
+     	    fprintf(f,"%s","\n\n");
+     	    
+        	fclose(f);
+        }
+        
+	    //toma el tiempo al momento del final de ejecucion
+		f_ttime = MPI_Wtime();
+		printf("	Tiempo total: %f segundos. \n", f_ttime - i_ttime);
 
     }
 
