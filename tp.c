@@ -333,17 +333,9 @@ void tp(int ac, char** av){
                 j=j+1;
             }
         }
-        /*if(esPrimo(My[i * columnas + j])){
+        if(esPrimo(My[i])){
             Px[i%n] = Px[i%n] + 1; //suma a la columna del vector correspondiente
             tpx = tpx + 1; // suma al contador de números primos
-        }*/
-    }
-
-    if(myId==numProcs-1){
-        i = 0;
-        printf("Cx=\n");
-        for (;i<filas*columnas;++i){
-            printf("\tCx[%i] = %i\n",i,Cx[i]);
         }
     }
 
