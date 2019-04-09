@@ -141,10 +141,9 @@ void tp(int ac, char** av){
     int tpx; // cantidad de números detectados por cada proceso
     int i, j; //contadores genéricos
 
-    double i_ttime;
-    double f_ttime;
-    double i_time;
-    double f_time;
+	double i_time, f_time;
+    double i_ttime, f_ttime;
+    
     char processor_name[MPI_MAX_PROCESSOR_NAME];
 
     int* A; // Matriz con números aleatorios entre 0 y 5
@@ -364,9 +363,11 @@ void tp(int ac, char** av){
     MPI_Reduce(Px,P,n,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD); // envía los datos al proceso ROOT para vector P
 
     //guarda el tiempo actual, en segundos
-    i_time = MPI_Wtime();
+    f_time = MPI_Wtime();
 
     MPI_Barrier(MPI_COMM_WORLD);
+    
+    //
 
     if(myId == 0){
         // imprime el vector P para checkear los resultados
@@ -376,7 +377,7 @@ void tp(int ac, char** av){
             printf("P[%i]: %i, ", a, P[a]);
         }
 
-        printf("Resultados finales:\n");
+        printf("\nResultados finales:\n");
         printf("\tValor de n = %i \n", n);
         printf("\tNúmero total de procesos que corrieron: %i \n", numProcs);
         printf("\tTotal de valores primos en M: %i \n", tp);
@@ -384,9 +385,10 @@ void tp(int ac, char** av){
         /*El tiempo que tardó desde que ya el usuario comunicó sus valores hasta
           antes de que se desplieguen resultados en pantalla y se escriban los
           archivos de texto. */
+          printf("	Tiempo parcial: %f segundos. \n", f_time - i_time);
 
         //toma el tiempo al momento del final de ejecucion
-        f_time = MPI_Wtime();
+        f_ttime = MPI_Wtime();
         printf("	Tiempo total: %f segundos. \n", f_ttime - i_ttime);
 
     }
