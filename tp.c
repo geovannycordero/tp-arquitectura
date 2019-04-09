@@ -301,7 +301,7 @@ void tp(int ac, char** av){
         i = n;
     }
     int des = 0;
-    if(myId==numProcs-1){
+    if(myId != 0){
         des = (filas*n)+n; //cantidad de desplazamientos
     } else{
         des = filas*n; //cantidad de desplazamientos
