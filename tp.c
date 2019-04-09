@@ -368,8 +368,6 @@ void tp(int ac, char** av){
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-
-
     if(myId == 0){
         // imprime el vector P para checkear los resultados
         int a = 0;
@@ -377,12 +375,11 @@ void tp(int ac, char** av){
         for(;a<n;++a){
             printf("P[%i]: %i, ", a, P[a]);
         }
-        printf("\n");
 
-        printf("\nResultados finales:\n");
-        printf("	Valor de n = %i \n", n);
-        printf("	Número total de procesos que corrieron: %i \n", numProcs);
-        printf("	Total de valores primos en M: %i \n", tp);
+        printf("Resultados finales:\n");
+        printf("\tValor de n = %i \n", n);
+        printf("\tNúmero total de procesos que corrieron: %i \n", numProcs);
+        printf("\tTotal de valores primos en M: %i \n", tp);
 
         /*El tiempo que tardó desde que ya el usuario comunicó sus valores hasta
           antes de que se desplieguen resultados en pantalla y se escriban los
