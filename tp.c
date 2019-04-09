@@ -112,7 +112,7 @@ void calcularM(int* Mx, int* Ax, int* B, int filas, int columnas){
  * @return
  */
 int esPrimo(int num){
-	int i;
+    int i;
     if(num<=3 && num!=0){
         return 1; // num = 0 o 1 o 2 o 3
     } else{
@@ -220,6 +220,7 @@ void tp(int ac, char** av){
     Mx = (int*) malloc(n/numProcs * n * sizeof(int));
     Px = (int*) calloc(n , sizeof(int));
     My = (int*) calloc(((n/numProcs)+2) * n, sizeof(int)); // matriz My, con dos filas y columnas extra
+    Cx = (int*) calloc(n/numProcs * n , sizeof(int));
 
     if(myId!=0){
         B = (int *) malloc(n * n * sizeof(int));
@@ -231,7 +232,7 @@ void tp(int ac, char** av){
 
     int filas = n/numProcs;
     int columnas = n;
-    
+
 
     // Divide A en Ax
     MPI_Scatter(A,filas*columnas,MPI_INT,
@@ -251,7 +252,7 @@ void tp(int ac, char** av){
     MPI_Barrier(MPI_COMM_WORLD);
 
     // Inicia el recorrido único de la matriz Mx
-    
+
     if(myId == 0){
         // imprime M
         printf("\nM=");
@@ -264,117 +265,108 @@ void tp(int ac, char** av){
         }
         printf("\n");
     }
-    
+
     int* cuantos; //filas que le tocan a cada proceso
     int* inicio; //fila de inicio de cada proceso
-    
+
     cuantos = malloc(numProcs * sizeof(int));
     inicio = malloc(numProcs * sizeof(int));
-    
+
     if(myId == 0){
-	    j = 0;
-	    for( ; j < numProcs; ++j){
-			if(j == 0){
-				cuantos[j] = (filas + 1) * n;
-	    		inicio[j] = 0;
-			}
-			else if(j == numProcs-1){
-				cuantos[j] = (filas + 1) * n;		
-				inicio[j] = (filas * j - 1) * n;
-			}
-			else{
-				cuantos[j] = (filas + 2) * n;
-	    		inicio[j] = (filas * j - 1) * n;
-			}
-	    }
+        j = 0;
+        for( ; j < numProcs; ++j){
+            if(j == 0){
+                cuantos[j] = (filas + 1) * n;
+                inicio[j] = 0;
+            }
+            else if(j == numProcs-1){
+                cuantos[j] = (filas + 1) * n;
+                inicio[j] = (filas * j - 1) * n;
+            }
+            else{
+                cuantos[j] = (filas + 2) * n;
+                inicio[j] = (filas * j - 1) * n;
+            }
+        }
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
-    
-    MPI_Bcast(cuantos,numProcs,MPI_INT,0,MPI_COMM_WORLD);
-    MPI_Bcast(inicio,numProcs,MPI_INT,0,MPI_COMM_WORLD);
-    
+
     MPI_Scatterv(M, cuantos, inicio, MPI_INT, My, (filas+2)*n, MPI_INT, 0, MPI_COMM_WORLD);
 
-    i = 0;
-    int des = cuantos[myId];
-        
-    for( ; i < des; i++){
-
-    	j = 0;
-    	for( ; j < columnas; j++){
-		
-			/*if(esPrimo(My[i * columnas + j])){
-	            Px[i%n] = Px[i%n] + 1; //suma a la columna del vector correspondiente
-	            tpx = tpx + 1; // suma al contador de números primos
-	        }*/
-	        
-    		if(i == 0){
-				if(j%columnas == 0){
-					C[i * columnas + j] = 
-						My[i * columnas + j] + 
-						My[i * columnas + (j+1)] + 
-						My[(i+1) * columnas + j]; 
-				}
-				else if(j%columnas == columnas-1){
-					C[i * columnas + j] = 
-						My[i * columnas + j] + 
-						My[i * columnas + (j-1)] + 
-						My[(i+1) * columnas + j]; // = 2;
-				}
-				else{
-					C[i * columnas + j] = 
-						My[i * columnas + j] + 
-						My[i * columnas + (j-1)] + 
-						My[(i+1) * columnas + j]+ 
-						My[i * columnas + (j+1)];// = 3;
-				}
-			}
-			else{					// con problemas
-				if(j%n == 0){
-					C[i * columnas + j] = 
-						My[i * columnas + j] + 
-						My[(i-1) * columnas + j] + 
-						My[i * columnas + (j+1)] + 
-						My[(i+1) * columnas + j];// = 4;
-				}
-				else if(j%columnas == columnas-1){
-					if((i) == sqrt(n) && (j) == sqrt(n)){
-					printf("C[%i, %i] = %i + %i + %i \tby %i\n", i,j, My[i * columnas + j], My[(i-1) * columnas + j], My[i * columnas + (j-1)], My[(i+1) * columnas + j], myId);}
-					C[i * columnas + j] = 
-						My[i * columnas + j] + 
-						My[(i-1) * columnas + j] + 
-						My[i * columnas + (j-1)] + 
-						My[(i+1) * columnas + j];// = 5;
-				}
-				else{
-					C[i * columnas + j] = 
-						My[i * columnas + j] + 
-						My[(i+1) * columnas + j] + 
-						My[(i-1) * columnas + j] + 
-						My[i * columnas + (j+1)] + 
-						My[i * columnas + (j-1)];// = 0;
-				}
-			}
-    	}
+    //setea el inicio del recorrido de la matriz My
+    if(myId==0){
+        i = 0;
+    } else {
+        i = n;
     }
-	
-	
+    int des = 0;
+    if(myId==numProcs-1){
+        des = (filas*n)+n; //cantidad de desplazamientos
+    } else{
+        des = filas*n; //cantidad de desplazamientos
+    }
+
+    j = 0; // índice de escritura sobre Cx
+
+    for( ; i < des; i++){
+        if(myId==0 & i<n){ // primera fila
+            if((i%n)==0){ //está sobre la columna 0
+                Cx[j] = My[i] + My[i+1] + My[i+n];
+                j=j+1;
+            } else if ( i%n == n-1 ) { //está sobre la columna n-1
+                Cx[j] = My[i] + My[i-1] + My[i+n];
+                j=j+1;
+            } else{ //entrada normal
+                Cx[j] = My[i] + My[i-1] + My[i+1] + My[i+n];
+                j=j+1;
+            }
+        } else{//resto de los procesos
+            if((i%n)==0){ //está sobre la columna 0
+                Cx[j] = My[i] + My[i-n] + My[i+1] + My[i+n];
+                j=j+1;
+            } else if ( i%n == n-1 ) { //está sobre la columna n-1
+                Cx[j] = My[i] + My[i-n] + My[i-1] + My[i+n];
+                j=j+1;
+            } else{ //entrada normal
+                Cx[j] = My[i] + My[i-n] + My[i-1] + My[i+1] + My[i+n];
+                j=j+1;
+            }
+        }
+        /*if(esPrimo(My[i * columnas + j])){
+            Px[i%n] = Px[i%n] + 1; //suma a la columna del vector correspondiente
+            tpx = tpx + 1; // suma al contador de números primos
+        }*/
+    }
+
+    if(myId==numProcs-1){
+        i = 0;
+        printf("Cx=\n");
+        for (;i<filas*columnas;++i){
+            printf("\tCx[%i] = %i\n",i,Cx[i]);
+        }
+    }
+
     /* Barrera de sincronización.
        Hasta que todos los procesos alcancen este llamado ninguno puede proseguir.*/
     MPI_Barrier(MPI_COMM_WORLD);
-    
+
+    // Envía Cx para que se transforme en C
+    MPI_Gather(Cx,filas*columnas,MPI_INT,
+               C,filas*columnas,MPI_INT,
+               0,MPI_COMM_WORLD);
+
     if(myId == 0){
-	    printf("\nC=");
-	    i = 0;
-	    for (; i < n*n; i++) {
-	        if(!(i%n)){
-	            printf("\n");
-	        }
-	        printf("\t%i ", C[i]);
-	    }
-	    printf("\n");
-    }    
+        printf("\nC=");
+        i = 0;
+        for (; i < n*n; i++) {
+            if(!(i%n)){
+                printf("\n");
+            }
+            printf("\t%i ", C[i]);
+        }
+        printf("\n");
+    }
 
     MPI_Reduce(&tpx,&tp,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD); // envía los datos al proceso ROOT para tp
     MPI_Reduce(Px,P,n,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD); // envía los datos al proceso ROOT para vector P
@@ -407,9 +399,9 @@ void tp(int ac, char** av){
         //toma el tiempo al momento del final de ejecucion
         f_time = MPI_Wtime();
         printf("	Tiempo total: %f segundos. \n", f_ttime - i_ttime);
-        
+
     }
-    
+
     MPI_Finalize();
 }
 
