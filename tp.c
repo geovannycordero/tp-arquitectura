@@ -3,12 +3,13 @@
 #include <time.h>   //para el random
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 #include "mpi.h"
 
 /**
  * @brief Archivo en C con la solución a la tarea programada 1
  *
- *      En este archivo se especifica la solución a la tarea programada 1.
+ * En este archivo se especifica la solución a la tarea programada 1.
  * Continuar con la descripción del archivo aquí.
  *
  * @author  Geovanny Cordero Valverde   (geovanny.corderovalverde@ucr.ac.cr)
@@ -18,15 +19,57 @@
 
 //  *** Firma de los métodos usados en el programa ***
 
-void tp(int,char**);
-
-
-
-
-//  *** Método de ejecución principal ***
+/**
+ * @brief Método que contiene toda la lógica de ejecución
+ * Recibe los parámetros del main para usarlos con MPI
+ * @param ac Cantidad de parámetros ingresados
+ * @param av Vector con los parámetros
+ */
+void tp(int argc,char** argv);
 
 /**
- * Método de ejecución principal del programa
+ * @brief Método que llena e imprime las matrices A y B
+ * Este método llena las matrices A y B, con los números entre 0 y 5 para A
+ * y los números entre 0 y 2 para B. Luego, imprime A y B para verificar el resultado.
+ * @param n dimensión de las matrices (siempre son nxn)
+ * @param A direción en memoria de la matriz A
+ * @param B direción en memoria de la matriz B
+ */
+void llenarMatrices(int n, int* A, int* B);
+
+/**
+ * @brief Método utilizado por cada proceso para calcular su parte de M
+ * @param Mx Buffer para el cálculo parcial de M
+ * @param Ax Buffer con el subconjunto de filas de la matriz A
+ * @param B Matriz B
+ * @param filas cantidad de filas correspondientes al proceso
+ * @param columnas las n columnas
+ */
+void calcularM(int* Mx, int* Ax, int* B, int filas, int columnas);
+
+/**
+ * @brief Calcula si un número pasado como parámetro es primo o no
+ * @param num Número a verificar
+ * @return verdadero o falso (0 o 1)
+ */
+int esPrimo(int num);
+
+/**
+ * @brief Imprime o genera los archivos con los resultados finales
+ * @param n DImensión de la matriz
+ * @param numProcs Número de procesos
+ * @param tp Total de valores primos en la matriz M
+ * @param timep Tiempo parcial de ejecucion
+ * @param A Matriz con valores aleatorios
+ * @param B Matriz con valores aleatorios
+ * @param M Matriz resultante de multiplicar A * B
+ * @param P Vector con la cantidad de valores primos por columna de M
+ * @param C Matriz con entradas calculadas a partir de
+ */
+void generarResultadosFinales(int n, int numProcs, int tp, double timep, int *A, int *B, int *M, int *C, int *P);
+
+/**
+ * @brief Método de ejecución principal del programa
  * @param argc
  * @param argv
  * @return 0 si el proceso es exitoso, -1 en caso contrario
@@ -39,104 +82,8 @@ int main(int argc, char** argv){
 }
 
 
-
 //  *** Implementación de los métodos usados ***
 
-/**
- * @brief Método que llena e imprime las matrices A y B
- *
- * 		Este método llena las matrices A y B, con los números entre 0 y 5 para A
- * y los números entre 0 y 2 para B. Luego, imprime A y B para verificar el resultado.
- *
- * @param n dimensión de las matrices (siempre son nxn)
- * @param A direción en memoria de la matriz A
- * @param B direción en memoria de la matriz B
- */
-void llenarMatrices(int n, int* A, int* B){
-    int i=0;
-    for(; i < (n*n) ; i++){
-        A[i] = rand() % 6; // llena la matriz A con números entre 0 y 5
-    }
-
-    i = 0;
-    for(; i< (n*n) ; i++){
-        B[i] = rand() % 3; // llena la matriz B con números entre 0 y 2
-    }
-
-    // imprime A
-    printf("A =");
-    i=0;
-    for (; i < n*n; i++) {
-        if(!(i%n)){
-            printf("\n\t");
-        }
-        printf("\t%i ", A[i]);
-    }
-
-    // imprime B
-    printf("\nB =");
-    i=0;
-    for (; i < n*n; i++) {
-        if(!(i%n)){
-            printf("\n\t");
-        }
-        printf("\t%i ", B[i]);
-    }
-}
-
-/**
- * @brief Método utilizado por cada proceso para calcular su parte de M
- *
- *      Agregar una descripción más amplia aquí
- * También aprovechar esta línea ...
- *
- * @param Mx Buffer para el cálculo parcial de M
- * @param Ax Buffer con el subconjunto de filas de la matriz A
- * @param B Matriz B
- * @param filas cantidad de filas correspondientes al proceso
- * @param columnas las n columnas
- */
-void calcularM(int* Mx, int* Ax, int* B, int filas, int columnas){
-    int fila=0;
-    for (; fila < filas; ++fila) {
-        int columna = 0;
-        for(; columna < columnas; ++columna){
-            int offset = fila * columnas + columna; // índice de acceso de la matriz Mx(fila,columna) = Mx[offset]
-            Mx[offset] = 0; // limpia la basura en memoria
-            int x = 0; //los n elementos de cada fila
-            for(; x < columnas; ++x){
-                Mx[offset] = Mx[offset] + Ax[fila * columnas + x] * B[x * columnas + columna];
-            }
-        }
-    }
-}
-
-/**
- * @brief
- *
- * @param num
- * @return
- */
-int esPrimo(int num){
-    if(num<=3 && num!=0){
-        return 1; // num = 0 o 1 o 2 o 3
-    } else{
-        int i = 2;
-        for(; i <= (int)sqrt(num) ; i++){
-            if(!(num%i)){ // si num%i = 0 entonces no es primo
-                return 0;
-            }
-        }
-        return 1; // es primo
-    }
-}
-
-
-/**
- *
- * @param ac
- * @param av
- */
 void tp(int ac, char** av){
 
     int myId; // identificador del proceso actual (#)
@@ -145,11 +92,11 @@ void tp(int ac, char** av){
     int n; // dimensión de la matriz (siempre es de tamaño n x n)
     int tp; // cantidad de números primos en M (suma de todos los tpx)
     int tpx; // cantidad de números detectados por cada proceso
+    int i, j, des; //contadores genéricos
 
-    double i_ttime;
-    double f_ttime;
-    double i_time;
-    double f_time;
+	double i_time, f_time;
+    double i_ttime, f_ttime;
+    
     char processor_name[MPI_MAX_PROCESSOR_NAME];
 
     int* A; // Matriz con números aleatorios entre 0 y 5
@@ -166,8 +113,6 @@ void tp(int ac, char** av){
 
     int* C; // Matriz donde C[i,j] = M[i,j] + M[i,j-1] + M[i-1,j] + M[i,j+1] + M[i+1,j]
     int* Cx; // porción de la matriz C que le corresponde calcular a cada proceso
-
-
 
 
     //se inicia el trabajo con MPI
@@ -226,10 +171,12 @@ void tp(int ac, char** av){
     Ax = (int*) malloc(n/numProcs * n * sizeof(int));
     Mx = (int*) malloc(n/numProcs * n * sizeof(int));
     Px = (int*) calloc(n , sizeof(int));
-    My = (int*) calloc(((n/numProcs)+2) * (n) , sizeof(int)); // matriz My, con dos filas y columnas extra
+    My = (int*) calloc(((n/numProcs)+2) * n, sizeof(int)); // matriz My, con dos filas y columnas extra
+    Cx = (int*) calloc(n/numProcs * n , sizeof(int));
 
     if(myId!=0){
         B = (int *) malloc(n * n * sizeof(int));
+        C = (int *) malloc(n * n * sizeof(int));
     }
 
     // propagación de la totalidad de la matriz B
@@ -237,6 +184,7 @@ void tp(int ac, char** av){
 
     int filas = n/numProcs;
     int columnas = n;
+
 
     // Divide A en Ax
     MPI_Scatter(A,filas*columnas,MPI_INT,
@@ -251,15 +199,83 @@ void tp(int ac, char** av){
                M,filas*columnas,MPI_INT,
                0,MPI_COMM_WORLD);
 
+    /* Barrera de sincronización.
+       Hasta que todos los procesos alcancen este llamado ninguno puede proseguir.*/
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    // Inicia el recorrido único de la matriz Mx
+
+    int* cuantos; //filas que le tocan a cada proceso
+    int* inicio; //fila de inicio de cada proceso
+
+    cuantos = malloc(numProcs * sizeof(int));
+    inicio = malloc(numProcs * sizeof(int));
+
     if(myId == 0){
-        // imprime M
-        printf("\nM =");
-        int i=0;
-        for (; i < n*n; i++) {
-            if(!(i%n)){
-                printf("\n\t");
+        j = 0;
+        for( ; j < numProcs; ++j){
+            if(j == 0){
+                cuantos[j] = (filas + 1) * n;
+                inicio[j] = 0;
             }
-            printf("\t%i ", M[i]);
+            else if(j == numProcs-1){
+                cuantos[j] = (filas + 1) * n;
+                inicio[j] = (filas * j - 1) * n;
+            }
+            else{
+                cuantos[j] = (filas + 2) * n;
+                inicio[j] = (filas * j - 1) * n;
+            }
+        }
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    MPI_Scatterv(M, cuantos, inicio, MPI_INT, My, (filas+2)*n, MPI_INT, 0, MPI_COMM_WORLD);
+
+    //setea el inicio del recorrido de la matriz My
+    if(myId==0){
+        i = 0;
+    } else {
+        i = n;
+    }
+    
+    des = 0;
+    if(myId != 0){
+        des = (filas*n)+n; //cantidad de desplazamientos
+    } else{
+        des = filas*n; //cantidad de desplazamientos
+    }
+
+    j = 0; // índice de escritura sobre Cx
+
+    for( ; i < des; i++){
+        if(myId==0 & i<n){ // primera fila
+            if((i%n)==0){ //está sobre la columna 0
+                Cx[j] = My[i] + My[i+1] + My[i+n];
+                j=j+1;
+            } else if ( i%n == n-1 ) { //está sobre la columna n-1
+                Cx[j] = My[i] + My[i-1] + My[i+n];
+                j=j+1;
+            } else{ //entrada normal
+                Cx[j] = My[i] + My[i-1] + My[i+1] + My[i+n];
+                j=j+1;
+            }
+        } else{//resto de los procesos
+            if((i%n)==0){ //está sobre la columna 0
+                Cx[j] = My[i] + My[i-n] + My[i+1] + My[i+n];
+                j=j+1;
+            } else if ( i%n == n-1 ) { //está sobre la columna n-1
+                Cx[j] = My[i] + My[i-n] + My[i-1] + My[i+n];
+                j=j+1;
+            } else{ //entrada normal
+                Cx[j] = My[i] + My[i-n] + My[i-1] + My[i+1] + My[i+n];
+                j=j+1;
+            }
+        }
+        if(esPrimo(My[i])){
+            Px[i%n] = Px[i%n] + 1; //suma a la columna del vector correspondiente
+            tpx = tpx + 1; // suma al contador de números primos
         }
     }
 
@@ -267,49 +283,254 @@ void tp(int ac, char** av){
        Hasta que todos los procesos alcancen este llamado ninguno puede proseguir.*/
     MPI_Barrier(MPI_COMM_WORLD);
 
-    // Inicia el recorrido único de la matriz Mx
-
-    int i=0;
-    tpx = 0; // contador del proceso para el total de números primos en M (tp)
-    for (; i < filas*columnas; i++) {
-        if(esPrimo(Mx[i])){
-            Px[i%n] = Px[i%n] + 1; //suma a la columna del vector correspondiente
-            tpx = tpx + 1; // suma al contador de números primos
-        }
-    }
+    // Envía Cx para que se transforme en C
+    MPI_Gather(Cx,filas*columnas,MPI_INT,
+               C,filas*columnas,MPI_INT,
+               0,MPI_COMM_WORLD);
 
     MPI_Reduce(&tpx,&tp,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD); // envía los datos al proceso ROOT para tp
     MPI_Reduce(Px,P,n,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD); // envía los datos al proceso ROOT para vector P
 
     //guarda el tiempo actual, en segundos
-    i_time = MPI_Wtime();
+    f_time = MPI_Wtime();
 
     MPI_Barrier(MPI_COMM_WORLD);
-
+    
     if(myId == 0){
-        // imprime el vector P para checkear los resultados
-        int a = 0;
-        printf("\n");
-        for(;a<n;++a){
-            printf("P[%i]: %i, ", a, P[a]);
+		generarResultadosFinales(n, numProcs, tp, (f_time-i_time), A, B, M, C, P);
+        
+	    //toma el tiempo al momento del final de ejecucion
+		f_ttime = MPI_Wtime();
+		printf("Tiempo total: %f segundos. \n", f_ttime - i_ttime);
+
+    }
+
+    MPI_Finalize();
+}
+
+void llenarMatrices(int n, int* A, int* B){
+    int i=0;
+    for(; i < (n*n) ; i++){
+        A[i] = rand() % 6; // llena la matriz A con números entre 0 y 5
+    }
+
+    i = 0;
+    for(; i< (n*n) ; i++){
+        B[i] = rand() % 3; // llena la matriz B con números entre 0 y 2
+    }
+}
+
+void calcularM(int* Mx, int* Ax, int* B, int filas, int columnas){
+    int fila=0;
+    for (; fila < filas; ++fila) {
+        int columna = 0;
+        for(; columna < columnas; ++columna){
+            int offset = fila * columnas + columna; // índice de acceso de la matriz Mx(fila,columna) = Mx[offset]
+            Mx[offset] = 0; // limpia la basura en memoria
+            int x = 0; //los n elementos de cada fila
+            for(; x < columnas; ++x){
+                Mx[offset] = Mx[offset] + Ax[fila * columnas + x] * B[x * columnas + columna];
+            }
         }
-        printf("\n");
+    }
+}
 
-        printf("\nResultados finales:\n");
-        printf("	Valor de n = %i \n", n);
-        printf("	Número total de procesos que corrieron: %i \n", numProcs);
-        printf("	Total de valores primos en M: %i \n", tp);
+int esPrimo(int num){
+    int i;
+    if(num<=3 && num!=0){
+        return 1; // num = 0 o 1 o 2 o 3
+    } else{
+        i = 2;
+        for(; i <= (int)sqrt(num) ; i++){
+            if(!(num%i)){ // si num%i = 0 entonces no es primo
+                return 0;
+            }
+        }
+        return 1; // es primo
+    }
+}
 
-        /*El tiempo que tardó desde que ya el usuario comunicó sus valores hasta
-          antes de que se desplieguen resultados en pantalla y se escriban los
-          archivos de texto. */
-        printf("	Tiempo total de \"procesamiento\": %f segundos. \n", f_time - i_time);
+void generarResultadosFinales(int n, int numProcs, int tp, double timep, int *A, int *B, int *M, int *C, int *P){
+	FILE *f, *a, *b, *m, *p, *c; //archivos para guardar los datos
+	int i; //contador genérico
+	char *filename, *aname, *bname, *mname, *cname, *pname; //nombres de los archivos, según el caso
+		
+	printf("\nResultados finales:\n");
+    printf("\tValor de n = %i \n", n);
+    printf("\tNúmero total de procesos que corrieron: %i \n", numProcs);
+    printf("\tTotal de valores primos en M: %i \n", tp);
 
-        //toma el tiempo al momento del final de ejecucion
-        f_time = MPI_Wtime();
-        printf("	Tiempo total: %f segundos. \n", f_ttime - i_ttime);
+    /*El tiempo que tardó desde que ya el usuario comunicó sus valores hasta
+      antes de que se desplieguen resultados en pantalla y se escriban los
+      archivos de texto. */
+    printf("	Tiempo parcial: %f segundos. \n", timep);
 
-        MPI_Finalize();
+    if(n > 5){
+    	//reserva de memoria para los nombres de los archivos
+		filename = (char*) malloc(30 * sizeof(char*));
+		aname = (char*) malloc(10 * sizeof(char*));
+	    bname = (char*) malloc(10 * sizeof(char*));
+	    mname = (char*) malloc(10 * sizeof(char*));
+	    cname = (char*) malloc(10 * sizeof(char*));
+	    pname = (char*) malloc(10 * sizeof(char*));	
+	    
+      	if(numProcs == 1 && n == 2000){ //caso a, 2000 o 200
+        	filename = "resultados/parametros_caso_a.txt";
+        	aname = "resultados/Aa.txt";
+        	bname = "resultados/Ba.txt";
+        	mname = "resultados/Ma.txt";
+        	cname = "resultados/Ca.txt";
+	       	pname = "resultados/Pa.txt";
+        }
+        else if(numProcs == 10 && n == 2000){ //caso b, 2000 o 200
+        	filename = "resultados/parametros_caso_b.txt";
+        	aname = "resultados/Ab.txt";
+        	bname = "resultados/Bb.txt";
+        	mname = "resultados/Mb.txt";
+        	cname = "resultados/Cb.txt";
+        	pname = "resultados/Pb.txt";
+        }
+        else if(numProcs == 10 && n == 30){ //caso c, 2000 o 200
+        	filename = "resultados/parametros_caso_c.txt";
+        	aname = "resultados/Ac.txt";
+        	bname = "resultados/Bc.txt";
+        	mname = "resultados/Mc.txt";
+        	cname = "resultados/Cc.txt";
+        	pname = "resultados/Pc.txt"; 
+        }
+        else{ //caso genérico
+        	filename = "resultados/parametros.txt";
+        	aname = "resultados/A.txt";
+        	bname = "resultados/B.txt";
+        	mname = "resultados/M.txt";
+        	cname = "resultados/C.txt";
+        	pname = "resultados/P.txt";
+		}
+		
+        f = fopen(filename, "w");
+        a = fopen(aname, "w");
+        b = fopen(bname, "w");
+        m = fopen(mname, "w");
+        p = fopen(pname, "w");
+        c = fopen(cname, "w");
+       
+       	if(f == NULL || a == NULL || b == NULL || m == NULL || p == NULL || c == NULL){
+       		perror("Error opening file");
+       		exit(EXIT_FAILURE);
+       	}
+       	        	
+       	fprintf(f,"%s%s%s", 
+       					"~\nCarlos Delgado Rojas\n",
+       					"Geovanny Cordero Valverde\n\n",
+		        		"Archivo con resultados\n\n");
+		
+		fprintf(f,"%s%i","Valor de n = ", n);
+		fprintf(f,"%s%i","\nNúmero total de procesos:", numProcs);
+		fprintf(f,"%s%i","\nTotal de valores primos en M: ", tp);
+		
+       	fprintf(a,"%s","\nMatriz A:\n");
+        i = 0;
+        for (; i < n*n; i++) {
+            if(!(i%n)){
+                fprintf(a,"%s","\n\n");
+            }
+            fprintf(a,"%i ",A[i]);
+        }
+        fprintf(a,"\n\n");
+    	    
+   	    fprintf(b,"%s","\nMatriz B:\n");
+        i = 0;
+        for (; i < n*n; i++) {
+            if(!(i%n)){
+                fprintf(b,"%s","\n\n");
+            }
+            fprintf(b,"%i ",B[i]);
+        }
+        fprintf(b,"\n\n");
+        
+   	    fprintf(m,"%s","\nMatriz M:\n");
+        i = 0;
+        for (; i < n*n; i++) {
+            if(!(i%n)){
+                fprintf(m,"%s","\n\n");
+            }
+            fprintf(m,"%i ",M[i]);
+        }
+        fprintf(m,"\n\n");
+    	    
+   	    fprintf(p,"%s","\nVector P:\n\n");
+   	    i = 0;
+        for (; i < n; i++) {
+            fprintf(p,"%i ",P[i]);
+        }
+        fprintf(p,"\n\n");
+       	
+       	fprintf(c,"%s","\nMatriz C:\n");
+        i = 0;
+        for (; i < n*n; i++) {
+            if(!(i%n)){
+                fprintf(c,"%s","\n\n");
+            }
+            fprintf(c,"%i ",C[i]);
+        }
+        fprintf(c,"\n\n");
+        	  
+        //  se cierran los archivos
+       	fclose(f);
+       	fclose(a);
+       	fclose(b);
+       	fclose(m);
+       	fclose(c);
+       	fclose(p);
+    }
+    else{ //solo imprime
+    	printf("%s","\n\nMatriz A:");
+        i = 0;
+        for (; i < n*n; i++) {
+            if(!(i%n)){
+                printf("%s","\n\n");
+            }
+            printf("%i\t",A[i]);
+        }
+        printf("\n\n");
+    	    
+   	    printf("%s","Matriz B:");
+        i = 0;
+        for (; i < n*n; i++) {
+            if(!(i%n)){
+                printf("%s","\n\n");
+            }
+            printf("%i\t",B[i]);
+        }
+        printf("\n\n");
+        
+   	    printf("%s","Matriz M:");
+        i = 0;
+        for (; i < n*n; i++) {
+            if(!(i%n)){
+                printf("%s","\n\n");
+            }
+            printf("%i\t",M[i]);
+        }
+        printf("\n\n");
+    	    
+   	    printf("%s","Vector P:\n");
+   	    i = 0;
+        for (; i < n; i++) {
+            printf("%i\t",P[i]);
+        }
+        printf("\n\n");
+       	
+       	printf("%s","Matriz C:");
+        i = 0;
+        for (; i < n*n; i++) {
+            if(!(i%n)){
+                printf("%s","\n\n");
+            }
+            printf("%i\t",C[i]);
+        }
+        
+        printf("\n\n");
     }
 }
 
