@@ -3,6 +3,7 @@
 #include <time.h>   //para el random
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 #include "mpi.h"
 
 /**
@@ -17,9 +18,17 @@
 
 //  *** Firma de los métodos usados en el programa ***
 
+/**
+ * Método que contiene toda la lógica de ejecución
+ * Recibe los parámetros del main para usarlos con MPI
+ */
 void tp(int,char**);
 
-//  *** Método de ejecución principal ***
+/**
+ * Imprime o genera los archivos con los resultados finales
+ */
+void generarResultadosFinales(int n, int numProcs, int tp, double timep, int *A, int *B, int *M, int *C, int *P);
+
 
 /**
  * Método de ejecución principal del programa
@@ -324,85 +333,193 @@ void tp(int ac, char** av){
     MPI_Barrier(MPI_COMM_WORLD);
     
     if(myId == 0){
-
-        printf("\nResultados finales:\n");
-        printf("\tValor de n = %i \n", n);
-        printf("\tNúmero total de procesos que corrieron: %i \n", numProcs);
-        printf("\tTotal de valores primos en M: %i \n", tp);
-
-        /*El tiempo que tardó desde que ya el usuario comunicó sus valores hasta
-          antes de que se desplieguen resultados en pantalla y se escriban los
-          archivos de texto. */
-        printf("	Tiempo parcial: %f segundos. \n", f_time - i_time);
-        
-        if(n > 5){
-        	FILE *f;
-        	
-        	f = fopen("resultados.txt", "w");
-        	if(f == NULL){
-        		perror("Error opening file");
-        	}
-        	
-        	fprintf(f,"%s%s%s", "Carlos Delgado Rojas\n",
-        					"Geovanny Cordero Valverde\n\n",
-			        		"Archivo con resultados\n\n\n");
-        	
-        	fprintf(f,"%s","Matriz A:\n");
-	        i = 0;
-	        for (; i < n*n; i++) {
-	            if(!(i%n)){
-	                fprintf(f,"%s","\n");
-	            }
-	            fprintf(f,"%i\t",C[i]);
-	        }
-     	    fprintf(f,"%s","\n\n");
-     	    
-     	    fprintf(f,"%s","Matriz B:\n");
-	        i = 0;
-	        for (; i < n*n; i++) {
-	            if(!(i%n)){
-	                fprintf(f,"%s","\n");
-	            }
-	            fprintf(f,"%i\t",B[i]);
-	        }
-     	    fprintf(f,"%s","\n\n");
-     	    
-     	    fprintf(f,"%s","Matriz M:\n");
-	        i = 0;
-	        for (; i < n*n; i++) {
-	            if(!(i%n)){
-	                fprintf(f,"%s","\n");
-	            }
-	            fprintf(f,"%i\t",M[i]);
-	        }
-     	    fprintf(f,"%s","\n\n");
-     	    
-     	    fprintf(f,"%s","Vector P:\n");
-     	    i = 0;
-	        for (; i < n; i++) {
-	            fprintf(f,"%i\t",P[i]);
-	        }
-     	    fprintf(f,"%s","\n\n");
-        	
-        	fprintf(f,"%s","Matriz C:\n");
-	        i = 0;
-	        for (; i < n*n; i++) {
-	            if(!(i%n)){
-	                fprintf(f,"%s","\n");
-	            }
-	            fprintf(f,"%i\t",C[i]);
-	        }
-     	    fprintf(f,"%s","\n\n");
-     	    
-        	fclose(f);
-        }
+		generarResultadosFinales(n, numProcs, tp, (f_time-i_time), A, B, M, C, P);
         
 	    //toma el tiempo al momento del final de ejecucion
 		f_ttime = MPI_Wtime();
-		printf("	Tiempo total: %f segundos. \n", f_ttime - i_ttime);
+		printf("Tiempo total: %f segundos. \n", f_ttime - i_ttime);
 
     }
 
     MPI_Finalize();
+}
+
+void generarResultadosFinales(int n, int numProcs, int tp, double timep, int *A, int *B, int *M, int *C, int *P){
+	FILE *f, *a, *b, *m, *p, *c; //archivos para guardar los datos
+	int i; //contador genérico
+	char *filename, *aname, *bname, *mname, *cname, *pname; //nombres de los archivos, según el caso
+		
+	printf("\nResultados finales:\n");
+    printf("\tValor de n = %i \n", n);
+    printf("\tNúmero total de procesos que corrieron: %i \n", numProcs);
+    printf("\tTotal de valores primos en M: %i \n", tp);
+
+    /*El tiempo que tardó desde que ya el usuario comunicó sus valores hasta
+      antes de que se desplieguen resultados en pantalla y se escriban los
+      archivos de texto. */
+    printf("	Tiempo parcial: %f segundos. \n", timep);
+
+    if(n > 5){
+    	//reserva de memoria para los nombres de los archivos
+		filename = (char*) malloc(30 * sizeof(char*));
+		aname = (char*) malloc(10 * sizeof(char*));
+	    bname = (char*) malloc(10 * sizeof(char*));
+	    mname = (char*) malloc(10 * sizeof(char*));
+	    cname = (char*) malloc(10 * sizeof(char*));
+	    pname = (char*) malloc(10 * sizeof(char*));	
+	    
+      	if(numProcs == 1 && n == 2000){ //caso a, 2000 o 200
+        	filename = "resultados/parametros_caso_a.txt";
+        	aname = "resultados/Aa.txt";
+        	bname = "resultados/Ba.txt";
+        	mname = "resultados/Ma.txt";
+        	cname = "resultados/Ca.txt";
+	       	pname = "resultados/Pa.txt";
+        }
+        else if(numProcs == 10 && n == 2000){ //caso b, 2000 o 200
+        	filename = "resultados/parametros_caso_b.txt";
+        	aname = "resultados/Ab.txt";
+        	bname = "resultados/Bb.txt";
+        	mname = "resultados/Mb.txt";
+        	cname = "resultados/Cb.txt";
+        	pname = "resultados/Pb.txt";
+        }
+        else if(numProcs == 10 && n == 30){ //caso c, 2000 o 200
+        	filename = "resultados/parametros_caso_c.txt";
+        	aname = "resultados/Ac.txt";
+        	bname = "resultados/Bc.txt";
+        	mname = "resultados/Mc.txt";
+        	cname = "resultados/Cc.txt";
+        	pname = "resultados/Pc.txt"; 
+        }
+        else{ //caso genérico
+        	filename = "parametros.txt";
+        	aname = "resultados/A.txt";
+        	bname = "resultados/B.txt";
+        	mname = "resultados/M.txt";
+        	cname = "resultados/C.txt";
+        	pname = "resultados/P.txt";
+		}
+		
+        f = fopen(filename, "w");
+        a = fopen(aname, "w");
+        b = fopen(bname, "w");
+        m = fopen(mname, "w");
+        p = fopen(pname, "w");
+        c = fopen(cname, "w");
+       
+       	if(f == NULL || a == NULL || b == NULL || m == NULL || p == NULL || c == NULL){
+       		perror("Error opening file");
+       		exit(EXIT_FAILURE);
+       	}
+       	        	
+       	fprintf(f,"%s%s%s", 
+       					"~\nCarlos Delgado Rojas\n",
+       					"Geovanny Cordero Valverde\n\n",
+		        		"Archivo con resultados\n\n");
+		
+		fprintf(f,"%s%i","Valor de n = ", n);
+		fprintf(f,"%s%i","\nNúmero total de procesos:", numProcs);
+		fprintf(f,"%s%i","\nTotal de valores primos en M: ", tp);
+		
+       	fprintf(a,"%s","\n\nMatriz A:\n");
+        i = 0;
+        for (; i < n*n; i++) {
+            if(!(i%n)){
+                fprintf(a,"%s","\n\n");
+            }
+            fprintf(a,"%i\t",A[i]);
+        }
+    	    
+   	    fprintf(b,"%s","Matriz B:\n");
+        i = 0;
+        for (; i < n*n; i++) {
+            if(!(i%n)){
+                fprintf(b,"%s","\n\n");
+            }
+            fprintf(b,"%i\t",B[i]);
+        }
+        
+   	    fprintf(m,"%s","Matriz M:\n");
+        i = 0;
+        for (; i < n*n; i++) {
+            if(!(i%n)){
+                fprintf(m,"%s","\n\n");
+            }
+            fprintf(m,"%i\t",M[i]);
+        }
+    	    
+   	    fprintf(p,"%s","Vector P:\n");
+   	    i = 0;
+        for (; i < n; i++) {
+            fprintf(p,"%i\t",P[i]);
+        }
+       	
+       	fprintf(c,"%s","Matriz C:\n");
+        i = 0;
+        for (; i < n*n; i++) {
+            if(!(i%n)){
+                fprintf(c,"%s","\n\n");
+            }
+            fprintf(c,"%i\t",C[i]);
+        }
+        	  
+        //  se cierran los archivos
+       	fclose(f);
+       	fclose(a);
+       	fclose(b);
+       	fclose(m);
+       	fclose(c);
+       	fclose(p);
+    }
+    else{ //solo imprime
+    	printf("%s","\n\nMatriz A:");
+        i = 0;
+        for (; i < n*n; i++) {
+            if(!(i%n)){
+                printf("%s","\n\n");
+            }
+            printf("%i\t",A[i]);
+        }
+        printf("\n\n");
+    	    
+   	    printf("%s","Matriz B:");
+        i = 0;
+        for (; i < n*n; i++) {
+            if(!(i%n)){
+                printf("%s","\n\n");
+            }
+            printf("%i\t",B[i]);
+        }
+        printf("\n\n");
+        
+   	    printf("%s","Matriz M:");
+        i = 0;
+        for (; i < n*n; i++) {
+            if(!(i%n)){
+                printf("%s","\n\n");
+            }
+            printf("%i\t",M[i]);
+        }
+        printf("\n\n");
+    	    
+   	    printf("%s","Vector P:");
+   	    i = 0;
+        for (; i < n; i++) {
+            printf("%i\t",P[i]);
+        }
+        printf("\n\n");
+       	
+       	printf("%s","Matriz C:");
+        i = 0;
+        for (; i < n*n; i++) {
+            if(!(i%n)){
+                printf("%s","\n\n");
+            }
+            printf("%i\t",C[i]);
+        }
+        
+        printf("\n\n");
+    }
 }
 
